@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "pidcontroller.h": "c",
-        "motor_control.h": "c",
-        "zf_common_headfile.h": "c"
-    }
-}

@@ -1,28 +1,28 @@
 ./objects/encoder.o: ..\code\encoder.c ..\code\encoder.h \
   ..\..\libraries\zf_common\zf_common_headfile.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\stdio.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\stdint.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\string.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\string.h \
   ..\..\libraries\sdk\drives\fsl_common.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\assert.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\stdbool.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\stdlib.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\stddef.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\assert.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdbool.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdlib.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stddef.h \
   ..\..\libraries\sdk\deceive\fsl_device_registers.h \
   ..\..\libraries\sdk\deceive\MIMXRT1064.h \
   ..\..\libraries\sdk\CMSIS\Include\core_cm7.h \
   ..\..\libraries\sdk\CMSIS\Include\cmsis_version.h \
   ..\..\libraries\sdk\CMSIS\Include\cmsis_compiler.h \
   ..\..\libraries\sdk\CMSIS\Include\cmsis_armclang.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\arm_compat.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\arm_acle.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\arm_compat.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\arm_acle.h \
   ..\..\libraries\sdk\CMSIS\Include\mpu_armv7.h \
   ..\..\libraries\sdk\deceive\system_MIMXRT1064.h \
   ..\..\libraries\sdk\deceive\MIMXRT1064_features.h \
   ..\..\libraries\sdk\drives\fsl_common_arm.h \
   ..\..\libraries\sdk\drives\fsl_clock.h \
   ..\..\libraries\sdk\utilities\debug_console\fsl_debug_console.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\stdarg.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdarg.h \
   ..\..\libraries\sdk\drives\fsl_iomuxc.h \
   ..\..\libraries\sdk\drives\fsl_cache.h \
   ..\..\libraries\sdk\drives\fsl_csi.h \
@@ -105,5 +105,5 @@
   ..\..\libraries\components\sdmmc\sdmmc_config.h \
   ..\..\libraries\sdk\board\clock_config.h ..\code\motor_control.h \
   ..\code\PIDController.h ..\code\ramp.h \
-  D:\MDK\ARM\ARMCLANG\Bin\..\include\math.h ..\code\imu963ra.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\math.h ..\code\imu963ra.h \
   ..\code\gyro.h
