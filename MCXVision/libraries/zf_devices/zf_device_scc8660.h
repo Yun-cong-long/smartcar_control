@@ -112,7 +112,8 @@ extern uint32       scc8660_frame_size;
 uint8       scc8660_set_brightness      (uint16 data);
 uint8       scc8660_set_white_balance   (uint16 data);
 uint8       scc8660_set_reg             (uint8 addr, uint16 data);
-
+// 在头文件中添加函数声明
+uint8 scc8660_set_uniform_brightness(uint16 brightness);
 uint8       scc8660_init                (void);
 
 #endif

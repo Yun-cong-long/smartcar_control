@@ -4,7 +4,7 @@
 #define max3v(v1, v2, v3)   ((v1)<(v2)? ((v2)<(v3)?(v3):(v2)):((v1)<(v3)?(v3):(v1)))
 #define SWAPBYTE(h) ((((uint16_t)h << 8)&0xFF00) | ((uint16_t)h >> 8))
 
-target_condi_struct target_color_condi = {0, 20, 100, 240, 28, 228, 20, 20, 320, 240};
+target_condi_struct target_color_condi = {210, 255, 80, 255, 20, 240, 10, 10, 320, 240};
 result_struct target_pos_out = {0};
 
 static void readcolor(unsigned int x, unsigned int y, color_rgb_struct* rgb)
@@ -253,13 +253,13 @@ void set_color_target_condi(uint16 rgb565_data, target_condi_struct* condition)
     {
         condition->h_min = 0;
     }
-    if(hsl.hue < (240 - CONDI_H_RANGE))
+    if(hsl.hue < (255 - CONDI_H_RANGE))
     {
         condition->h_max = hsl.hue + CONDI_H_RANGE;
     }
     else
     {
-        condition->h_max = 240;
+        condition->h_max = 255;
     }
 
     if(hsl.saturation > CONDI_S_RANGE)
@@ -270,13 +270,13 @@ void set_color_target_condi(uint16 rgb565_data, target_condi_struct* condition)
     {
         condition->s_min = 0;
     }
-    if(hsl.saturation < (240 - CONDI_S_RANGE))
+    if(hsl.saturation < (255 - CONDI_S_RANGE))
     {
         condition->s_max = hsl.saturation + CONDI_S_RANGE;
     }
     else
     {
-        condition->s_max = 240;
+        condition->s_max = 255;
     }
 
 
@@ -288,13 +288,13 @@ void set_color_target_condi(uint16 rgb565_data, target_condi_struct* condition)
     {
         condition->l_min = 0;
     }
-    if(hsl.luminance < (240 - CONDI_L_RANGE))
+    if(hsl.luminance < (255 - CONDI_L_RANGE))
     {
         condition->l_max = hsl.luminance + CONDI_L_RANGE;
     }
     else
     {
-        condition->l_max = 240;
+        condition->l_max = 255;
     }
 //zf_debug_printf("hsl = %s\r\n" , condition);
 }

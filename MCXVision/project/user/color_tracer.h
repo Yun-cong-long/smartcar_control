@@ -11,7 +11,7 @@
 #define IMG_H               SCC8660_H - 1   // 图片高度
 
 #define ALLOW_FAIL_PER      30               // 容错率，没1<<ALLOW_FAIL_PER个点允许出现一个错误点，容错率越大越容易识别，但错误率越大
-#define ITERATE_NUM         12               // 迭代次数，迭代次数越多识别越精确，但计算量越大
+#define ITERATE_NUM         20               // 迭代次数，迭代次数越多识别越精确，但计算量越大
 
 #define CONDI_H_RANGE       20              // 设定色块标定的颜色范围，在set_color_target_condi函数中使用
 #define CONDI_S_RANGE       140              // 设定色块标定的对比度范围，在set_color_target_condi函数中使用

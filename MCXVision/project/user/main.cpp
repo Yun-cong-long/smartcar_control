@@ -112,11 +112,11 @@ int main(void)
     ips200_init();
     // …„œÒÕ∑≥ı ºªØ
     scc8660_init();
-
+    scc8660_set_uniform_brightness(160);
     while (1)
     {
-			scc8660_set_brightness(90);
-			LED_WHITE(LED_ON); //open white LED
+//			scc8660_set_brightness(50);
+//			LED_WHITE(LED_ON); //open white LED
         if(scc8660_finish)
         {
             scc8660_finish = 0;

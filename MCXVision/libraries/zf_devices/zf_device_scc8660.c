@@ -166,3 +166,37 @@ uint8 scc8660_init (void)
     ezh_start();
     return return_state;
 }
+
+
+// 在源文件中添加实现
+uint8 scc8660_set_uniform_brightness(uint16 brightness) {
+    uint8 return_state = 0;
+    
+    // 1. 设置基础亮度
+    return_state |= scc8660_set_brightness(brightness);
+    
+    // 2. 应用更强烈的边缘补偿
+    // 中心区域 (保持默认)
+    return_state |= scc8660_set_reg(0x30, 0x090);  // 中心增益系数 1.0
+    
+    // 中间区域 (中等补偿)
+    return_state |= scc8660_set_reg(0x31, 0x120);  // 增益系数 1.12
+    
+    // 边缘区域 (强补偿) - 增加边缘增益
+    return_state |= scc8660_set_reg(0x32, 0x400);  // 增益系数 1.38 (比之前更强)
+    
+    // 3. 调整梯度范围 - 更早开始补偿，覆盖更多区域
+    return_state |= scc8660_set_reg(0x33, 0x40);   // 梯度起始位置更靠近中心 (25%)
+    return_state |= scc8660_set_reg(0x34, 0x1C0);  // 梯度结束位置更靠近边缘 (87.5%)
+    
+    // 4. 增加边缘专用补偿通道
+    return_state |= scc8660_set_reg(0x36, 0x380);  // 额外边缘增益系数 1.25
+    
+    // 5. 启用增强型补偿模式
+    return_state |= scc8660_set_reg(0x35, 0x03);   // 启用区域亮度校正+边缘增强
+    
+    // 6. 更新摄像头配置
+    return_state |= scc8660_set_reg(0xFF, 0x01);    // 应用新设置
+    
+    return return_state;
+}
