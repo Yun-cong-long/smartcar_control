@@ -112,7 +112,7 @@ int main(void)
     ips200_init();
     // …„œÒÕ∑≥ı ºªØ
     scc8660_init();
-    scc8660_set_uniform_brightness(160);
+    scc8660_set_uniform_brightness(600);
     while (1)
     {
 //			scc8660_set_brightness(50);
