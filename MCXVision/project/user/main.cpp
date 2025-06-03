@@ -116,7 +116,7 @@ int main(void)
     while (1)
     {
 //			scc8660_set_brightness(50);
-//			LED_WHITE(LED_ON); //open white LED
+			LED_WHITE(LED_ON); //open white LED
         if(scc8660_finish)
         {
             scc8660_finish = 0;

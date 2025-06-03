@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\mcx_vision_board.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\mcx_vision_board.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Mon Jun  2 10:16:38 2025
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Tue Jun  3 20:16:14 2025
 <BR><P>
 <H3>Maximum Stack Usage =       1192 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -3064,16 +3064,16 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[159]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[159]"></a>main</STRONG> (Thumb, 776 bytes, Stack size 8 bytes, main.o(.text.main))
+<P><STRONG><a name="[159]"></a>main</STRONG> (Thumb, 792 bytes, Stack size 8 bytes, main.o(.text.main))
 <BR><BR>[Stack]<UL><LI>Max Depth = 1192 + Unknown Stack Size
 <LI>Call Chain = main &rArr; ips200_init &rArr; ips200_set_region &rArr; LPSPI_MasterTransferEDMA &rArr; LPSPI_MasterTransferEDMALite &rArr; EDMA_TcdSetTransferConfig &rArr; EDMA_ConfigChannelSoftwareTCD &rArr; __aeabi_assert &rArr; DbgConsole_Printf &rArr; DbgConsole_Vprintf &rArr; memcpy
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1d1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_set_level
-<LI><a href="#[1ce]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ips200_draw_line
+<BR>[Calls]<UL><LI><a href="#[1ce]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ips200_draw_line
 <LI><a href="#[1c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;color_trace
 <LI><a href="#[1da]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_color_target_condi
 <LI><a href="#[1d9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_get_level
 <LI><a href="#[1d2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ips200_show_scc8660
+<LI><a href="#[1d1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_set_level
 <LI><a href="#[1d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;zf_user_printf
 <LI><a href="#[1d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;zf_debug_printf
 <LI><a href="#[1d6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;scc8660_set_uniform_brightness
@@ -3515,8 +3515,8 @@ Local Symbols
 <P><STRONG><a name="[1e6]"></a>soft_iic_send_data</STRONG> (Thumb, 214 bytes, Stack size 24 bytes, zf_driver_soft_iic.o(.text.soft_iic_send_data))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = soft_iic_send_data
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1d1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_set_level
-<LI><a href="#[1d9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_get_level
+<BR>[Calls]<UL><LI><a href="#[1d9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_get_level
+<LI><a href="#[1d1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_set_level
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;soft_iic_sccb_read_register
 <LI><a href="#[1e1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;soft_iic_sccb_write_register
@@ -3534,8 +3534,8 @@ Local Symbols
 <P><STRONG><a name="[1e4]"></a>soft_iic_read_data</STRONG> (Thumb, 260 bytes, Stack size 24 bytes, zf_driver_soft_iic.o(.text.soft_iic_read_data))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = soft_iic_read_data
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1d1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_set_level
-<LI><a href="#[1d9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_get_level
+<BR>[Calls]<UL><LI><a href="#[1d9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_get_level
+<LI><a href="#[1d1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_set_level
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;soft_iic_sccb_read_register
 </UL>

@@ -4,7 +4,7 @@
 #define max3v(v1, v2, v3)   ((v1)<(v2)? ((v2)<(v3)?(v3):(v2)):((v1)<(v3)?(v3):(v1)))
 #define SWAPBYTE(h) ((((uint16_t)h << 8)&0xFF00) | ((uint16_t)h >> 8))
 
-target_condi_struct target_color_condi = {210, 255, 80, 255, 20, 240, 10, 10, 320, 240};
+target_condi_struct target_color_condi = {210, 255, 80, 255, 20, 255, 10, 10, 320, 240};
 result_struct target_pos_out = {0};
 
 static void readcolor(unsigned int x, unsigned int y, color_rgb_struct* rgb)
