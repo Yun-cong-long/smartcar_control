@@ -112,7 +112,7 @@ int main(void)
     ips200_init();
     // 摄像头初始化
     scc8660_init();
-    scc8660_set_uniform_brightness(600);
+    scc8660_set_uniform_brightness(850);  //700  2000
     while (1)
     {
 //			scc8660_set_brightness(50);
@@ -137,27 +137,37 @@ int main(void)
                 ips200_draw_line((target_pos_out.x + target_pos_out.w/2), (target_pos_out.y - target_pos_out.h/2), (target_pos_out.x + target_pos_out.w/2), (target_pos_out.y + target_pos_out.h/2), 0xffff);
 						  proportion = ((double)(target_pos_out.w*target_pos_out.h))/((double)(320*240));
 							deviation = 159 - target_pos_out.x;
-							if (deviation < 10)        //车在左边
+							if (deviation > 20)        //车在左边
 							{
 								direction=2;
 								LED_RED(LED_ON);
 								LED_GREEN(LED_OFF);
 								LED_BLUE(LED_OFF);
 							}
-							if (deviation > -10)     //车在右边
+							if (deviation < -20)     //车在右边
 							{
 								direction=3;
 								LED_RED(LED_OFF);
 								LED_GREEN(LED_OFF);
 								LED_BLUE(LED_ON);
 							}
-							if (deviation > -10 && deviation <10 && proportion > 0.15)
+							if (deviation > -20 && deviation <20 && proportion <= 0.15)
 							{
 								direction=4;
 								LED_RED(LED_OFF);
 								LED_GREEN(LED_ON);
 								LED_BLUE(LED_OFF);
 							}
+							if (deviation >= -20 && deviation <= 20 && proportion > 0.15)
+							{
+								direction=5;
+							}
+							if (deviation >= -20 && deviation <= 20 && ((target_pos_out.y - target_pos_out.h/2) <= 10))
+							{
+								direction=5;
+//								
+							}
+//							if (deviation >= -20 && deviation <= 20 && target_pos_out.h > 0.15)
             }
 						else
 						{
@@ -170,7 +180,7 @@ int main(void)
 //					  zf_user_printf("%d" , deviation);
 						 zf_debug_printf("%c" , direction);
 			      	zf_user_printf("%c" , direction);
-					  system_delay_ms(50);
+					  system_delay_ms(5);
         }
     }
 }

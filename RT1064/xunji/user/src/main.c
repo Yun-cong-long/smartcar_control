@@ -61,6 +61,7 @@
 
 #define TRIG_PIN B9                //定义超声波触发引脚端口
 #define ECHO_PIN B10               //定义超声波触发引脚端口
+#define HUI_PIN D17
 
 extern int found_letter_position;
 extern int flag_cross;                 //十字的识别标志
@@ -111,12 +112,14 @@ int bias_center = 0;
 int UltrasonicGetLength(void);
 int juli = 0;
 int juli_flag = 0;
+float shijian = 0.0;
 uint8 get_uart1_data;
 uint8 get_uart4_data;
 uint32 go_time=0;
 int time_flag = 0;
 uint8 faajishu = 0;
 int kongxian = 0;
+int jishu = 0;
 void zhouqipit_init(void);
 void jieguoxianshi(int n,int count);
 void text(void);
@@ -159,14 +162,16 @@ int main(void)
 	  anglePID_DefaultInit();      //角度PID初始化
 		imu660ra_init();             //陀螺仪初始化
 		gyroOffset_init();//陀螺仪零漂初始化
-		state = 0;    //开始循迹
+		state = 1;    //开始循迹
 		
 		int flag_motor2=0;
 		int flag_motor3=0;
-		int flag_motor4=0;
+		int flag_motor4=0;	
 		int jieshu = 0;
 		int jiaodujj = 0;
 		int jiaodunow = 0;
+		int findkk = 0;
+		int kkkk=0;
     while(1)
     {
         if(mt9v03x_finish_flag)
@@ -175,10 +180,10 @@ int main(void)
 						{
 							Get_angle();
 							get_corrd();              //读取当前电机编码器数值
-							text();
+//							text();
 						  angle_turn = Image_Process();
 							ips200_show_int(0, 248, state, 4);
-							
+//							move_control(50,Angle_z,angle_turn);  //80
 //							ips200_show_int(0, 248, Angle_z, 10);
 //							if (flag_stop_Car == 1)
 //								set_motor_speed(0,0,0);
@@ -186,8 +191,7 @@ int main(void)
 //							ips200_show_int(0, 200, angle_turn, 10);
 //							Motor_Test();
 //					uart_write_byte (UART_4, 'A');
-//					system_delay_ms(5000);
-//							ips200_clear();
+//					system_delay_ms(2000);
 //					fifo_data_count = fifo_used(&uart_data_fifo);                           // 查看 fifo 是否有数据
 //					ips200_show_int(0, 200, fifo_data_count, 10);		
 //          if(fifo_data_count != 0)                                                // 读取到数据了
@@ -209,12 +213,16 @@ int main(void)
 //							motor4_position(-9000);
 //						}
 ////						uart_write_byte (UART_1, 'A');
+              if (state == 102)
+							{
+								move_control(100,angle_turn);
+							}
               if (state == -1)
 							{
-								move_control(60,angle_turn);  //80
+								move_control(100,0);  //80
 								jieshu++;
 //								ips200_show_int(0, 264, jieshu, 10);
-								if (jieshu > 160)
+								if (jieshu > 60)
 								{
 									state = 0;
 									Motor_Clear();
@@ -223,124 +231,65 @@ int main(void)
 				    	if (state == 1)     //正常循迹
 				    	{
 								kongxian++;
-//								if (pit1_state == 1)
-//                {
-								  if (flag_zebra == 1 && flag_Straight == 1)
+								kkkk++;
+								if (kkkk < 100)
+								{
+									move_control(100,0);
+								}
+								  if (flag_zebra == 1 && findbox == 1)
 									{
 										state = -1;
 										jieshu = 0;
 									}
-									findbox=get_uart1_data;
-//				    		  ips200_show_int(0, 200, findbox, 10);
-//				    	  	if (findbox == 1 && flag_left_ring == 0 && flag_right_ring == 0)    //没找到红方块
-//				  	 	    {
-//				  		  		move_control(60,angle_turn);  //80
-//				  		    }
-									if (flag_Straight == 1)
+									findbox = get_uart1_data;
+								  ips200_show_int(0, 200, findbox, 2);
+									jiaodunow = Angle_z;
+									if (findbox == 1 || kongxian <100)
 									{
-									if (findbox == 1 ||  kongxian < 150)
-									{
-											move_control(90,angle_turn);  //80
+										move_control(100,angle_turn);
 									}
-			  			    if (findbox == 2 && kongxian > 150)      //车在左边
-			  			    {
-			  			  	  move_control(30,6);  //80
-//									right_forward(25);
-				  		    }
-				  		    if (findbox == 3 && kongxian > 150)
-				  		    {
-				  		  	  move_control(30,-6);  //80
-//									left_forward(25);
-				  		    }
-								}
-									if (flag_Straight == 0)
+									else
 									{
-										if (findbox == 1 ||  kongxian < 150)
-									  {
-											move_control(60,angle_turn);  //80
-								  	}
-			  			      if (findbox == 2 && kongxian > 150)      //车在左边
-			  			      {
-			  			    	  move_control(30,10);  //80
-//									right_forward(25);
-				  		      }
-				  		      if (findbox == 3 && kongxian > 150)
-				  		      {
-				  		    	  move_control(30,-10);  //80
-//							  		left_forward(25);
-				  		      }
+										Motor_Clear();
+										system_delay_ms(100);
+										Motor_Clear();
+										state = 2;
 									}
-				  		    if (findbox == 4)
-				  		    {
-				  		  	  state=3;
-										position_zero();
-										kongxian=0;
-//				  			    set_motor_speed(0,0,0);
-//				  		  	  position_zero();
-//										PID_Clear(&Motor2_SpeedPID);
-//										PID_Clear(&Motor3_SpeedPID);
-//										PID_Clear(&Motor4_SpeedPID);
-										Motor_Clear();
-										system_delay_ms(500);
-										Motor_Clear();
-										jiaodujj = angle_turn;
-										jiaodunow = Angle_z;
-			  			    }
-//									pit1_state = 0;
-//							  }
+				  		    
 			        }
-//			 		    if (state == 2)   //靠近红方块
-//					    {
-//						    
-//						    if (juli_flag == 0)
-//				        {
-//							    juli=UltrasonicGetLength();	
-//							    juli_flag=1;
-//						    }
-//						    if (time_flag == 0)
-//						    {
-//							    timer_start(GPT_TIM_1);           // 启动定时 
-//							    time_flag = 1;
-//						    }
-//						    go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//								if (go_time < 5000000)
-//				        {
-//									if (flag_motor2 == 0  || flag_motor4 == 0)
-////									if (flag_motor2 == 0 || flag_motor3 == 0 || flag_motor4 == 0)
-//						      {
-//							      flag_motor2=motor2_position((juli-47)*10);
-////							      flag_motor3=motor3_position(0);
-//							      flag_motor4=motor4_position(-(juli-47)*10);
-//									}  				
-//						      else
-//						      {
-//							      state = 3;
-//							      timer_stop(GPT_TIM_1);                      // 停止定时器
-//						        timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//						  	    go_time = 0;
-//							      time_flag = 0;
-//							      juli_flag = 0;
-//										SetMotorCurrent(2,0);
-//										SetMotorCurrent(3,0);
-//										SetMotorCurrent(4,0);
-//						      }
-//								}
-//								else
-//							    {
-//								    state = 3;
-//							      timer_stop(GPT_TIM_1);                      // 停止定时器
-//						  	    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							      go_time = 0;
-//								    time_flag = 0;
-//							      juli_flag = 0;
-//										SetMotorCurrent(2,0);
-//										SetMotorCurrent(3,0);
-//										SetMotorCurrent(4,0);
-//							    }			
-//							
-//								ips200_show_int(0, 216, state, 10);
-//					    }
-   				    if (state == 3)     //判断图片类型
+							if (state == 2)
+							{
+								findbox=get_uart1_data;
+								findkk ++;
+								ips200_show_int(0, 200, findbox, 2);
+								if (findbox == 2)      //车在左边
+	              {
+		              speed_and_angle(8,jiaodunow);
+                }
+								if (findbox == 3)     //车在右边
+                {
+                  speed_and_angle(-8,jiaodunow);
+                }
+	              if (findbox == 4)    //车靠后
+	              {
+//		              set_motor_speed(-30,0,30);
+									text111(-10,0,10);
+	              }
+	              if (findbox == 5)   
+	              {
+		              Motor_Clear();
+									system_delay_ms(100);
+									Motor_Clear();
+									state = 3;
+									findkk = 0;
+	              }
+								if (findkk > 800)
+								{
+									state = 1;
+									Motor_Clear();
+								}
+							}
+							if (state == 3)     //判断图片类型
 					    {
 						     uart_write_byte (UART_4, 'A');
 								 faajishu++;
@@ -357,14 +306,14 @@ int main(void)
 				  		       if (numsss == 1)
 									     state = 4;           //左推箱子
 								     if (numsss == 0)
-									     state = 6;        //右推箱子
+									     state = 8;        //右推箱子
                    }
                    if(fifo_data_count == 4)                                                // 读取到数据了
                    {
                      fifo_read_buffer(&uart_data_fifo, fifo_get_data, &fifo_data_count, FIFO_READ_AND_CLEAN);    // 将 fifo 中数据读出并清空 fifo 挂载的缓冲
 //                     ips200_show_int(0, 200, fifo_data_count, 3);
 				  		       if (fifo_get_data[2] == 48 && fifo_get_data[3] <= 57)
-									     state = 6;
+									     state = 8;
 								     else
 							  		   state = 4;
                    }
@@ -381,14 +330,14 @@ int main(void)
 				  		       if (numsss == 1)
 									     state = 4;           //左推箱子
 								     if (numsss == 0)
-									     state = 6;        //右推箱子
+									     state = 8;        //右推箱子
                    }
                    if(fifo_data_count ==3)                                                // 读取到数据了
                    {
                      fifo_read_buffer(&uart_data_fifo, fifo_get_data, &fifo_data_count, FIFO_READ_AND_CLEAN);    // 将 fifo 中数据读出并清空 fifo 挂载的缓冲
 //                     ips200_show_int(0, 200, fifo_data_count, 3);
 				  		       if (fifo_get_data[1] == 48 && fifo_get_data[2] <= 56)
-									     state = 6;
+									     state = 8;
 								     else
 							  		   state = 4;
                    }
@@ -396,446 +345,176 @@ int main(void)
 								 jieguoxianshi(faajishu, fifo_data_count);
 							  	 ips200_show_int(0, 248, state, 10);
 								 system_delay_ms(100);
+								 jiaodunow = Angle_z;
+								 jiaodujj = angle_turn;
 					     }
-////					
-					     if (state == 4)              //左推箱子
-					     {
-					     	 if (time_flag == 0)
+							if (state == 4)        //左推箱子
+							{
+										 if (Angle_z - jiaodunow >= 35 - jiaodujj*0.7)
+//								     if (Angle_z - 90 >= 35)
+		                 {
+			                 Motor_Clear();
+											 state = 5;
+		                 }
+		                 else
+		                 {
+			                 text111(0,60,-10);
+		                 }
+							}
+							if (state == 5)      //前进推出赛道
+							{
+								if (time_flag == 0)
 						     {
 							     timer_start(GPT_TIM_1);           // 启动定时 
 							     time_flag = 1;
 						     }
-//						       set_motor_speed(45,-50,35);
-								   set_motor_speed(50,-40,5);						 
-//								   SetMotorCurrent(2,1850);
-//									 SetMotorCurrent(3,-1600);
-//									 SetMotorCurrent(4,-1000);
-//								   move_control(50,10);  //80
-						       go_time = timer_get(GPT_TIM_1); //获取定时的时间
-								 if (angle_turn > 20)
-								 {
-						     if (go_time >2000000 && Motor2_Position > 3500)
-						     {
-						       state = 5;
-							     timer_stop(GPT_TIM_1);                      // 停止定时器
-							     timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							     go_time = 0;
-							     time_flag = 0;
-									 position_zero();
-//									 SetMotorCurrent(2,0);
-//									 SetMotorCurrent(3,0);
-//									 SetMotorCurrent(4,0);
-//									 PID_Clear(&Motor2_SpeedPID);
-//									 PID_Clear(&Motor3_SpeedPID);
-//									 PID_Clear(&Motor4_SpeedPID);
-									 Motor_Clear();
-							     system_delay_ms(100);
-									 Motor_Clear();
-						      }
-								  }
-								  else
-									{
-										if (go_time >1800000 && Motor2_Position > 3500)
-						        {
-						          state = 5;
-							        timer_stop(GPT_TIM_1);                      // 停止定时器
-							        timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							        go_time = 0;
-							        time_flag = 0;
-								    	position_zero();
-//									 SetMotorCurrent(2,0);
-//									 SetMotorCurrent(3,0);
-//									 SetMotorCurrent(4,0);
-//									 PID_Clear(&Motor2_SpeedPID);
-//									 PID_Clear(&Motor3_SpeedPID);
-//									 PID_Clear(&Motor4_SpeedPID);
-									    Motor_Clear();
-							        system_delay_ms(100);
-									    Motor_Clear();
-						        }
-									}
-					      }
-				 	      if (state == 5)
-					      {
-						      if (time_flag == 0)
-						      {
-							      timer_start(GPT_TIM_1);           // 启动定时 
-							      time_flag = 1;
-						      }
-									set_motor_speed(7,80,-64);
-//						      left_forward(40);
-//									SetMotorCurrent(3,2000);
-//									SetMotorCurrent(4,-2000);
-						      go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//									if (angle_turn > 40)
-//									 {
-//										 state = 1;
-//						       	 timer_stop(GPT_TIM_1);                      // 停止定时器
-//							       timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							       go_time = 0;
-//						  	     time_flag = 0;
-////										 SetMotorCurrent(2,0);
-////										 SetMotorCurrent(3,0);
-////										 SetMotorCurrent(4,0);
-//										 Motor_Clear();
-//						   	     system_delay_ms(2000);
-//									 }
-									
-						      if (go_time > 1200000)
-									{
-						        if (go_time > 2500000 || flag_out == 1)
-						        {
-											if (Motor3_Position > 3000)
-											{
-							        state = 8;
-							        timer_stop(GPT_TIM_1);                      // 停止定时器
-							        timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							        go_time = 0;
-							        time_flag = 0;
-							  			kongxian = 0;
-											position_zero();
-//										set_motor_speed(0,0,0);
-//										SetMotorCurrent(2,0);
-//									  SetMotorCurrent(3,0);
-//									  SetMotorCurrent(4,0);
-//										PID_Clear(&Motor2_SpeedPID);
-//									  PID_Clear(&Motor3_SpeedPID);
-//									  PID_Clear(&Motor4_SpeedPID);
-								  		Motor_Clear();
-						 	        system_delay_ms(100);
-							  			Motor_Clear();
-											}
-						        }
-							  	}
-					      }
-////					
-					       if (state == 6)            //右推箱子
-					       {
-						       if (time_flag == 0)
-						       {
-							       timer_start(GPT_TIM_1);           // 启动定时 
-							       time_flag = 1;
-						       }
-//						       left_forward(40);
-//									 SetMotorCurrent(4,-1900);
-//									 SetMotorCurrent(3,1600);
-//									 set_motor_speed(-35,50,-45);
-									 set_motor_speed(-5,40,-50);
-						       go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//									 if (go_time > 800000 && angle_turn < -10)
-//									 {
-//										 state = 7;
-//							       timer_stop(GPT_TIM_1);                      // 停止定时器
-//							       timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							       go_time = 0;
-//							       time_flag = 0;
-////										 SetMotorCurrent(2,0);
-////										 SetMotorCurrent(3,0);
-////										 SetMotorCurrent(4,0);
-//										 Motor_Clear();
-//							       system_delay_ms(2000);
-//									 }
-									 if (angle_turn < -20)
-									 {
-										 if (go_time > 2000000 && Motor4_Position < -3500)
-						         {
-							       state = 7;
-							       timer_stop(GPT_TIM_1);                      // 停止定时器
-							       timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							       go_time = 0;
-							       time_flag = 0;
-										 position_zero();
-//										 SetMotorCurrent(2,0);
-//										 SetMotorCurrent(3,0);
-//										 SetMotorCurrent(4,0);
-										 Motor_Clear();
-							       system_delay_ms(100);
-										 Motor_Clear();
-						         }
-									 }
-									 else
-									 {
-										if (go_time > 1800000 && Motor4_Position < -3500)
-						        {
-							       state = 7;
-							       timer_stop(GPT_TIM_1);                      // 停止定时器
-							       timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							       go_time = 0;
-							       time_flag = 0;
-										 position_zero();
-//										 SetMotorCurrent(2,0);
-//										 SetMotorCurrent(3,0);
-//										 SetMotorCurrent(4,0);
-										 Motor_Clear();
-							       system_delay_ms(100);
-										 Motor_Clear();
-						        }
-								   }
-				         }
-					       if (state == 7)
-					       {
-						       if (time_flag == 0)
-						       {
-							       timer_start(GPT_TIM_1);           // 启动定时 
-							       time_flag = 9;
-						       }
-//						       right_forward(40);
-									 set_motor_speed(64,-80,-7);
-						       go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//									 if (angle_turn < -40)
-//									 {
-//										 state = 1;
-//						       	 timer_stop(GPT_TIM_1);                      // 停止定时器
-//							       timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							       go_time = 0;
-//						  	     time_flag = 0;
-////										 SetMotorCurrent(2,0);
-////										 SetMotorCurrent(3,0);
-////										 SetMotorCurrent(4,0);
-//										 Motor_Clear();
-//						   	     system_delay_ms(2000);
-//									 }
-						       if (go_time > 1200000)
-									 {
-						         if (go_time > 2500000 || flag_out == 1)
-						         {
-											 if (Motor3_Position < -3000)
-											 {
-							         state = 9;
-						         	 timer_stop(GPT_TIM_1);                      // 停止定时器
-							         timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							         go_time = 0;
-						  	       time_flag = 0;
-								  		 kongxian = 0;
-											 position_zero();
-//							 			 SetMotorCurrent(2,0);
-//										 SetMotorCurrent(3,0);
-//										 SetMotorCurrent(4,0);
-									  	 Motor_Clear();
-						   	       system_delay_ms(100);
-								 	  	 Motor_Clear();
-											 }
-						         }
-							  	 }
-					       }
-								 if (state == 8)
-					       {
-						       if (time_flag == 0)
-						       {
-							       timer_start(GPT_TIM_1);           // 启动定时 
-							       time_flag = 1;
-						       }
-//						       right_forward(40);
-									 set_motor_speed(-7,-80,64);
-						       go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//									 if (angle_turn < -40)
-//									 {
-//										 state = 1;
-//						       	 timer_stop(GPT_TIM_1);                      // 停止定时器
-//							       timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							       go_time = 0;
-//						  	     time_flag = 0;
-////										 SetMotorCurrent(2,0);
-////										 SetMotorCurrent(3,0);
-////										 SetMotorCurrent(4,0);
-//										 Motor_Clear();
-//						   	     system_delay_ms(2000);
-//									 }
-						       if (go_time > 1500000)
-									 {
-							         state = 1;
-						         	 timer_stop(GPT_TIM_1);                      // 停止定时器
-							         timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							         go_time = 0;
-						  	       time_flag = 0;
-								  		 kongxian = 0;
-											 position_zero();
-//							 			 SetMotorCurrent(2,0);
-//										 SetMotorCurrent(3,0);
-//										 SetMotorCurrent(4,0);
-									  	 Motor_Clear();
-						   	       system_delay_ms(100);
-								 	  	 Motor_Clear();
-							  	 }
-					       }
-								 if (state == 9)
-					      {
-						      if (time_flag == 0)
-						      {
-							      timer_start(GPT_TIM_1);           // 启动定时 
-							      time_flag = 1;
-						      }
-									set_motor_speed(-64,80,7);
-//						      left_forward(40);
-//									SetMotorCurrent(3,2000);
-//									SetMotorCurrent(4,-2000);
-						      go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//									if (angle_turn > 40)
-//									 {
-//										 state = 1;
-//						       	 timer_stop(GPT_TIM_1);                      // 停止定时器
-//							       timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							       go_time = 0;
-//						  	     time_flag = 0;
-////										 SetMotorCurrent(2,0);
-////										 SetMotorCurrent(3,0);
-////										 SetMotorCurrent(4,0);
-//										 Motor_Clear();
-//						   	     system_delay_ms(2000);
-//									 }
-									
-						      if (go_time > 1500000)
-									{
-							        state = 1;
-							        timer_stop(GPT_TIM_1);                      // 停止定时器
-							        timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							        go_time = 0;
-							        time_flag = 0;
-							  			kongxian = 0;
-											position_zero();
-//										set_motor_speed(0,0,0);
-//										SetMotorCurrent(2,0);
-//									  SetMotorCurrent(3,0);
-//									  SetMotorCurrent(4,0);
-//										PID_Clear(&Motor2_SpeedPID);
-//									  PID_Clear(&Motor3_SpeedPID);
-//									  PID_Clear(&Motor4_SpeedPID);
-								  		Motor_Clear();
-						 	        system_delay_ms(100);
-							  			Motor_Clear();
-							  	}
+								go_time = timer_get(GPT_TIM_1); //获取定时的时间
+								if (go_time <= 2800000)
+								{
+									text111(-60,0,60);
 								}
-					
-//					if (state == 3)
-//					{
-//						 uart_write_byte (UART_4, 'A');
-//					   system_delay_ms(3000);
-//				  	fifo_data_count = fifo_used(&uart_data_fifo);                           // 查看 fifo 是否有数据
-//            if(fifo_data_count != 0)                                                // 读取到数据了
-//            {
-//                fifo_read_buffer(&uart_data_fifo, fifo_get_data, &fifo_data_count, FIFO_READ_AND_CLEAN);    // 将 fifo 中数据读出并清空 fifo 挂载的缓冲
-//                ips200_show_int(0, 200, fifo_data_count, 10);
-//				  		  if (fifo_get_data[1] == 48 && fifo_get_data[2] >= 57)
-//									state = 4;
-//								if (fifo_get_data[1] == 49)
-//									state = 8;
-//            }
-//					}
-//					
-//					if (state == 4)
-//					{
-//						timer_start(GPT_TIM_1);           // 启动定时 
-//						state = 5;
-//						ips200_show_int(0, 216, state, 10);
-//					}
-//					if (state == 5)
-//					{
-//						left_or_right(20);
-//						go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//						if (go_time > 1000000)
-//						{
-//							state = 6;
-//							timer_stop(GPT_TIM_1);                      // 停止定时器
-//							timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							go_time = 0;
-//							system_delay_ms(500);
-//						}
-//					}
-//					if (state == 6)
-//					{
-//						timer_start(GPT_TIM_1);           // 启动定时 
-//						state = 7;
-//					}
-//					if (state == 7)
-//					{
-//						left_forward(20);
-//						go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//						if (go_time > 5000000)
-//						{
-//							state = 1;
-//							timer_stop(GPT_TIM_1);                      // 停止定时器
-//							timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							go_time = 0;
-//							system_delay_ms(500);
-//						}
-//					}
-//					
-//					if (state == 8)
-//					{
-//						timer_start(GPT_TIM_1);           // 启动定时 
-//						state = 9;
-//						ips200_show_int(0, 216, state, 10);
-//					}
-//					if (state == 9)
-//					{
-//						left_or_right(-20);
-//						go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//						if (go_time > 1000000)
-//						{
-//							state = 10;
-//							timer_stop(GPT_TIM_1);                      // 停止定时器
-//							timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							go_time = 0;
-//							system_delay_ms(500);
-//						}
-//					}
-//					if (state == 10)
-//					{
-//						timer_start(GPT_TIM_1);           // 启动定时 
-//						state = 11;
-//					}
-//					if (state == 11)
-//					{
-//						right_forward(20);
-//						go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//						if (go_time > 5000000)
-//						{
-//							state = 1;
-//							timer_stop(GPT_TIM_1);                      // 停止定时器
-//							timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							go_time = 0;
-//							system_delay_ms(500);
-//						}
-//					}
-					
-//					if (state == 3)
-//					{
-//						timer_start(GPT_TIM_1);           // 启动定时 
-//						state = 4;
-//						ips200_show_int(0, 216, state, 10);
-//					}
-//					if (state == 4)
-//					{
-//						left_or_right(20);
-//						go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//						if (go_time > 1000000)
-//						{
-//							state = 5;
-//							timer_stop(GPT_TIM_1);                      // 停止定时器
-//							timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							go_time = 0;
-//							system_delay_ms(500);
-//						}
-//					}
-//					if (state == 5)
-//					{
-//						timer_start(GPT_TIM_1);           // 启动定时 
-//						state = 6;
-//					}
-//					if (state == 6)
-//					{
-//						left_forward(20);
-//						go_time = timer_get(GPT_TIM_1); //获取定时的时间
-//						if (go_time > 5000000)
-//						{
-//							state = 1;
-//							pit0_state = 0;
-//							timer_stop(GPT_TIM_1);                      // 停止定时器
-//							timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-//							go_time = 0;
-//							system_delay_ms(500);
-//						}
-//					}
+								else
+								{
+									Motor_Clear();
+									shijian = go_time;
+									timer_stop(GPT_TIM_1);                      // 停止定时器
+							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+							    go_time = 0;
+							    time_flag = 0;
+								  position_zero();
+									state = 6;
+								}
+								if (go_time >= 1000000 && gpio_get_level(HUI_PIN)==1)  //跑一段时间超出赛道
+								{
+									Motor_Clear();
+									shijian = go_time;
+									timer_stop(GPT_TIM_1);                      // 停止定时器
+							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+							    go_time = 0;
+							    time_flag = 0;
+								  position_zero();
+									state = 6;
+								}
+							}
+							if (state == 6)          //回来
+							{
+								if (time_flag == 0)
+						     {
+							     timer_start(GPT_TIM_1);           // 启动定时 
+							     time_flag = 1;
+						     }
+								go_time = timer_get(GPT_TIM_1); //获取定时的时间
+								if (go_time <= shijian*0.6)
+								{
+									text111(60,0,-60);
+								}
+								else
+								{
+									Motor_Clear();
+									timer_stop(GPT_TIM_1);                      // 停止定时器
+							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+							    go_time = 0;
+							    time_flag = 0;
+								  position_zero();
+									state = 7;
+								}
+							}
+							if (state == 7)       //复原角度
+							{
+								if (Angle_z - jiaodunow <= 5)
+//								if (Angle_z - 90 <= 5)
+		            {
+			             Motor_Clear();
+									 state = 1;
+		             }
+		             else
+		             {
+			             text111(-30,-30,-30);
+		             }
+							}
+							if (state == 8)          //右推箱子
+							{
+								if (Angle_z - jiaodunow <= -35 - jiaodujj*0.7)
+//								if (Angle_z - 90 <= -35)
+		            {
+			            Motor_Clear();
+								  state = 9;
+		            }
+		            else
+		            {
+			            text111(10,-60,0);
+		            }
+						  }
+							if (state == 9)            //前进
+							{
+								if (time_flag == 0)
+						     {
+							     timer_start(GPT_TIM_1);           // 启动定时 
+							     time_flag = 1;
+						     }
+								go_time = timer_get(GPT_TIM_1); //获取定时的时间
+								if (go_time <= 2800000)
+								{
+									text111(-60,0,60);
+								}
+								else
+								{
+									Motor_Clear();
+									shijian = go_time;
+									timer_stop(GPT_TIM_1);                      // 停止定时器
+							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+							    go_time = 0;
+							    time_flag = 0;
+								  position_zero();
+									state = 10;
+								}
+								if (go_time >= 1000000 && gpio_get_level(HUI_PIN)==1)  //跑一段时间超出赛道
+								{
+									Motor_Clear();
+									shijian = go_time;
+									timer_stop(GPT_TIM_1);                      // 停止定时器
+							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+							    go_time = 0;
+							    time_flag = 0;
+								  position_zero();
+									state = 10;
+								}
+							}
+							if (state == 10)         //回来
+							{
+								if (time_flag == 0)
+						     {
+							     timer_start(GPT_TIM_1);           // 启动定时 
+							     time_flag = 1;
+						     }
+								go_time = timer_get(GPT_TIM_1); //获取定时的时间
+								if (go_time <= shijian*0.6)
+								{
+									text111(60,0,-60);
+								}
+								else
+								{
+									Motor_Clear();
+									timer_stop(GPT_TIM_1);                      // 停止定时器
+							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+							    go_time = 0;
+							    time_flag = 0;
+								  position_zero();
+									state = 11;
+								}
+							}
+							if (state == 11)
+							{
+								if (Angle_z - jiaodunow >= -5)
+		            {
+			             Motor_Clear();
+									 state = 1;
+		             }
+		             else
+		             {
+			             text111(30,30,30);
+		             }
+							}
 					  pit0_state = 0;                   // 清空周期中断触发标志位
 			  	}
         }
@@ -992,11 +671,14 @@ void jieguoxianshi(int n, int count)
 
 void text(void)
 {
-////	//电机测试
-//	SetMotorCurrent(2,1500);   //800临界
-//	SetMotorCurrent(3,1500);
-//  SetMotorCurrent(4,1500);
-//	  set_motor_speed(10,20,-10);
+//	//电机测试
+//	SetMotorCurrent(2,-1700);   //800临界
+//	SetMotorCurrent(3,2550);  //目前向右走
+//  SetMotorCurrent(4,-1700);
+//	  set_motor_speed(-30,60,-30);
+//	speed_and_angle(10,0);
+//	text111(-10,20,-10);
+//	text111(0,30,0);
 	
 	//编码器测试
 //	get_corrd();              //读取当前电机编码器数值
@@ -1055,30 +737,59 @@ void text(void)
 //	ips200_show_int(0, faajishu*16, faajishu, 3);
 //	ips200_show_string(120, faajishu*16, "monitor");
 
-  //红方块测试
-	findbox=get_uart1_data;
-	ips200_show_int(0, 200, findbox, 2);
-	if (findbox == 1)
-	{
-		move_control(60,angle_turn);  //80
-	}
-  if (findbox == 2)      //车在左边
-	{
-//    speed_and_angle(50,0);  //80
-		set_motor_speed(30,-30,0);
-    //									right_forward(25);
-  }
-  if (findbox == 3)     //车在右边
-  {
-    set_motor_speed(0,43,-30);  //80
-    //left_forward(25);
-   }
-	 if (findbox == 4)    //车靠后
-	 {
-		 set_motor_speed(30,0,-30);  //80
-	 }
-	 if (findbox == 5)   
-	 {
-		 set_motor_speed(0,0,0);
-	 }
+//  //红方块测试
+//	findbox=get_uart1_data;
+//	ips200_show_int(0, 200, findbox, 2);
+//	if (findbox == 1)
+//	{
+//		Motor_Clear();
+//	}
+//  if (findbox == 2)      //车在左边
+//	{
+////    speed_and_angle(50,0);  //80
+//		speed_and_angle(8,0);
+//    //									right_forward(25);
+//  }
+//  if (findbox == 3)     //车在右边
+//  {
+//    speed_and_angle(-8,0);
+//    //left_forward(25);
+//   }
+//	 if (findbox == 4)    //车靠后
+//	 {
+//		 text111(-10,0,10);
+//	 }
+//	 if (findbox == 5)
+//	 {
+//		 Motor_Clear();
+//	 }	
+//     jishu++;
+//		 if (jishu == 5)
+//		 {
+//			 
+//			 jishu = 0;
+//		 
+
+//     //推箱子测试
+//		 if (Angle_z - 90 >= 35)
+//		 {
+//			 Motor_Clear();
+//		 }
+//		 else
+//		 {
+//			 text111(0,30,0);
+//		 }
+       
+//			 //平移测试
+//			 jishu++;
+//			 if (jishu <= 300)
+//			   speed_and_angle(5,90);
+//			 else
+//				 speed_and_angle(-5,90);
+
+//       //灰度传感器测试
+//			 if (gpio_get_level(HUI_PIN)==1)    //识别到白为0，否则为1
+//				 text111(0,30,0);
+//			 else
+//				 text111(0,0,0);
 }
