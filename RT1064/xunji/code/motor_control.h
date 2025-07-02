@@ -67,4 +67,5 @@ void move_control(float move_speed, float turn_angle);
 void set_motor_speed(float motor2_speed, float motor4_speed, float motor3_speed);
 void Motor_Speed_PID(void);
 void speed_and_angle(float speed, float angle);
+void text111(float motor2_speed, float motor3_speed, float motor4_speed);
 #endif

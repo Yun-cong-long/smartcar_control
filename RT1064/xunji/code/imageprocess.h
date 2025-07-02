@@ -86,7 +86,7 @@ extern int flag_4;
 extern uint8 flag_zebra;
 extern uint8 flag_once;
 extern uint8 flag_stop;
-
+extern int findbox;
 extern int flag_BiZhang;
 extern int flag_Straight;
 extern int flag_left_ring;
@@ -149,6 +149,7 @@ int is_angle_right(float angle, float range, float current_angle);
 float normalize_angle(float angle);
 void find_left_ring_2(void);
 void find_right_ring_2(void);
+void find_right_ring_3(void);
 float Slope_cal(void);
 float Slope_cal_2(void);
 void Center_line(void);

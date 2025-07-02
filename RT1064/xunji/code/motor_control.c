@@ -5,9 +5,9 @@
 #include "gyro.h"
 
 //PID_t Motor1_SpeedPID;		
-PID_t Motor2_SpeedPID;		//ÓÒºó·½µç»ú
-PID_t Motor3_SpeedPID;		//Ç°·½µç»ú
-PID_t Motor4_SpeedPID;		//×óºó·½µç»ú
+PID_t Motor2_SpeedPID;		//ÓÒºó·½µç»ú        //×óÇ°·½
+PID_t Motor3_SpeedPID;		//Ç°·½µç»ú          //ºó·½
+PID_t Motor4_SpeedPID;		//×óºó·½µç»ú        //ÓÒÇ°·½
 
 PID_t angle_PID;					//½Ç¶È
 //PID_t angle1_PID;					//½Ç¶È
@@ -94,8 +94,8 @@ void anglePID_DefaultInit(void){				//½Ç¶ÈPID²ÎÊý³õÊ¼»¯
 //	PID_SetTargetWithNormal(&angle1_PID,0.0);
 	
 	PID_DefaultInit(&angle2_PID);
-	angle2_PID.Kp1 = 100.0f;				//5
-	angle2_PID.Ki1 = 10.0f;			//
+	angle2_PID.Kp1 = 50.0f;				//  40.0 4.0 0.8
+	angle2_PID.Ki1 = 5.0f;			//
 	angle2_PID.Kd1 = 1.0f;  //
 //	angle_PID.RampTartgetStep = 2;
 	angle2_PID.PID_OutMax = 8000;	
@@ -106,8 +106,8 @@ void anglePID_DefaultInit(void){				//½Ç¶ÈPID²ÎÊý³õÊ¼»¯
 	PID_SetTargetWithNormal(&angle2_PID,0.0);
 	
 	PID_DefaultInit(&angle3_PID);
-	angle3_PID.Kp1 = 150.0f;				//5
-	angle3_PID.Ki1 = 20.0f;			//
+	angle3_PID.Kp1 = 50.0f;				//100
+	angle3_PID.Ki1 = 5.0f;			//
 	angle3_PID.Kd1 = 1.0f;  //
 //	angle_PID.RampTartgetStep = 2;
 	angle3_PID.PID_OutMax = 8000;	
@@ -118,8 +118,8 @@ void anglePID_DefaultInit(void){				//½Ç¶ÈPID²ÎÊý³õÊ¼»¯
 	PID_SetTargetWithNormal(&angle3_PID,0.0);
 	
 	PID_DefaultInit(&angle4_PID);
-	angle4_PID.Kp1 = 100.0f;				//5
-	angle4_PID.Ki1 = 10.0f;			//
+	angle4_PID.Kp1 = 50.0f;				//5
+	angle4_PID.Ki1 = 5.0f;			//
 	angle4_PID.Kd1 = 1.0f;  //
 //	angle_PID.RampTartgetStep = 2;
 	angle4_PID.PID_OutMax = 8000;	
@@ -187,6 +187,10 @@ void SetMotorCurrent(uint8_t num, float current){			//ÉèÖÃµç»úµçÁ÷£¨PWM£©£¬¿ØÖÆµ
 			current = 9000;
 	else if(current < -9000)
 		current = -9000;
+//	if (current > 0 && current < 1200)
+//		current = 1200;
+//	if (current > -1200 && current < 0)
+//		current = -1200;
    switch(num)
 	 {
 //		 case 1:
@@ -399,17 +403,19 @@ void move_control(float move_speed, float turn_angle)
 {
 	float z_speed;
 	float motor2_speed, motor3_speed, motor4_speed;
-	float z_p = 1;  //0.8 0.75
-	z_speed = -turn_angle;
+	float z_p = 3.6;  // 1.8ÔÚ80Ô­  0.3ÔÚ80ÏÖ  3.6ÔÚ100ÏÖ
+	z_speed =  - turn_angle;
 	if (z_speed > 180)
 		z_speed = z_speed - 360;
 	if (z_speed < -180)
 		z_speed = z_speed + 360;
-	motor2_speed = move_speed + z_speed*z_p;
-	motor4_speed = -move_speed + z_speed*z_p;
+	motor2_speed = -move_speed + z_speed*z_p;
+	motor4_speed = move_speed + z_speed*z_p;
 	motor3_speed = z_speed*z_p;
 	set_motor_speed(motor2_speed, motor3_speed, motor4_speed);
+//	text111(motor2_speed, motor3_speed, motor4_speed);
 }
+
 
 void set_motor_speed(float motor2_speed, float motor3_speed, float motor4_speed)
 {
@@ -426,6 +432,9 @@ void set_motor_speed(float motor2_speed, float motor3_speed, float motor4_speed)
  	SetMotorCurrent(2,Motor2_SpeedPID.PID_Out);   //Çý¶¯µç»ú
  	SetMotorCurrent(3,Motor3_SpeedPID.PID_Out);   //Çý¶¯µç»ú
   SetMotorCurrent(4,Motor4_SpeedPID.PID_Out);   //Çý¶¯µç»ú
+//	ips200_show_int(0, 200, Motor2_SpeedPID.PID_Out,8);   
+//	ips200_show_int(0, 216, Motor3_SpeedPID.PID_Out,8);  
+//	ips200_show_int(0, 232, Motor4_SpeedPID.PID_Out,8); 
 }
 
 void Motor_Speed_PID(void)
@@ -449,25 +458,58 @@ void Motor_Speed_PID(void)
 
 void speed_and_angle(float speed, float angle)	
 {
-	PID_SetTargetWithNormal(&angle_PID, angle);
-	PID_Update(&angle_PID, Angle_z);
-	PID_GetPositionPID(&angle_PID);
-	
-	PID_SetTargetWithNormal(&Motor2_SpeedPID,speed - angle_PID.PID_Out);
-	PID_SetTargetWithNormal(&Motor3_SpeedPID,speed - angle_PID.PID_Out);
-	PID_SetTargetWithNormal(&Motor4_SpeedPID,speed + angle_PID.PID_Out);	
-//	PID_SetTargetWithNormal(&Motor1_SpeedPID,speed + angle_PID.PID_Out);
-//	if (mode == 0)   //×óÓÒ
-//	{
-//	PID_SetTargetWithNormal(&angle2_PID,speed);  //60
-//	PID_SetTargetWithNormal(&angle3_PID,-2*speed);  //-300
-//	PID_SetTargetWithNormal(&angle4_PID,speed);  //60
-//	}
-//	if (mode == 1)  //Ç°ºó
-//	{
-//		PID_SetTargetWithNormal(&angle2_PID,speed);  //60
-//	  PID_SetTargetWithNormal(&angle3_PID,0);  //-300
-//	  PID_SetTargetWithNormal(&angle4_PID,-speed);  //60
-//	}
-	Motor_Speed_PID();
+//	PID_SetTargetWithNormal(&angle_PID, angle);
+//	PID_Update(&angle_PID, Angle_z);
+//	PID_GetPositionPID(&angle_PID);
+//	
+//	PID_SetTargetWithNormal(&Motor2_SpeedPID,speed - angle_PID.PID_Out);
+//	PID_SetTargetWithNormal(&Motor3_SpeedPID,speed - angle_PID.PID_Out);
+//	PID_SetTargetWithNormal(&Motor4_SpeedPID,speed + angle_PID.PID_Out);	
+////	PID_SetTargetWithNormal(&Motor1_SpeedPID,speed + angle_PID.PID_Out);
+////	if (mode == 0)   //×óÓÒ
+////	{
+////	PID_SetTargetWithNormal(&angle2_PID,speed);  //60
+////	PID_SetTargetWithNormal(&angle3_PID,-2*speed);  //-300
+////	PID_SetTargetWithNormal(&angle4_PID,speed);  //60
+////	}
+////	if (mode == 1)  //Ç°ºó
+////	{
+////		PID_SetTargetWithNormal(&angle2_PID,speed);  //60
+////	  PID_SetTargetWithNormal(&angle3_PID,0);  //-300
+////	  PID_SetTargetWithNormal(&angle4_PID,-speed);  //60
+////	}
+//	Motor_Speed_PID();
+    float motor2_speed, motor3_speed, motor4_speed;
+		motor2_speed = -speed + ANGLE_TO_RAD(angle - Angle_z) + imu660ra_gyro_z/60;
+		motor3_speed = 2*speed + ANGLE_TO_RAD(angle - Angle_z) + imu660ra_gyro_z/60;
+		motor4_speed = -speed + ANGLE_TO_RAD(angle - Angle_z) + imu660ra_gyro_z/60;
+//		motor2_speed = -speed;
+//		motor3_speed = 2*speed;
+//		motor4_speed = -speed;
+//	  PID_SetTargetWithNormal(&angle2_PID,motor2_speed);
+//	  PID_SetTargetWithNormal(&angle3_PID,motor3_speed);
+//	  PID_SetTargetWithNormal(&angle4_PID,motor4_speed);
+//		Motor_Speed_PID();
+		text111(motor2_speed, motor3_speed, motor4_speed);
+}
+
+void text111(float motor2_speed, float motor3_speed, float motor4_speed)
+{
+//	int turn;
+//	turn = 90 - angle;
+	PID_SetTargetWithNormal(&angle2_PID,motor2_speed);   //ÉèÖÃÄ¿±êÖµ
+	PID_SetTargetWithNormal(&angle3_PID,motor3_speed);
+	PID_SetTargetWithNormal(&angle4_PID,motor4_speed);
+	PID_Update(&angle2_PID,Motor2_Speed);    //¸üÐÂPID²ÎÊý
+  PID_Update(&angle3_PID,Motor3_Speed);    //¸üÐÂPID²ÎÊý
+  PID_Update(&angle4_PID,Motor4_Speed);    //¸üÐÂPID²ÎÊý
+ 	PID_GetIncrementalPID(&angle2_PID);         //ÓÉ²ÎÊý¸üÐÂPID-OUT
+	PID_GetIncrementalPID(&angle3_PID);         //ÓÉ²ÎÊý¸üÐÂPID-OUT
+  PID_GetIncrementalPID(&angle4_PID);         //ÓÉ²ÎÊý¸üÐÂPID-OUT
+ 	SetMotorCurrent(2,angle2_PID.PID_Out);   //Çý¶¯µç»ú
+ 	SetMotorCurrent(3,angle3_PID.PID_Out);   //Çý¶¯µç»ú
+  SetMotorCurrent(4,angle4_PID.PID_Out);   //Çý¶¯µç»ú
+//	ips200_show_int(0, 200, angle2_PID.PID_Out,8);   
+//	ips200_show_int(0, 216, angle3_PID.PID_Out,8);  
+//	ips200_show_int(0, 232, angle4_PID.PID_Out,8); 
 }
