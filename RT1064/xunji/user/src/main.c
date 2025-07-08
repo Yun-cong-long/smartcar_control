@@ -85,7 +85,7 @@ extern int show_uart_data;
 bool ready=0;
 bool is_roundabout = 1;//0不在1在环岛内
 //uint8 flag_stop_Car = 0;
-float angle=0;          
+float angle=0.0;          
 int8 duty = 10;
 int angle_turn=0;       //车要转的角度
 float move_angle = 90.0f;  //车行驶时的角度
@@ -106,7 +106,7 @@ uint32 fifo_data_count = 0;                                                     
 fifo_struct uart_data_fifo;
 uint8 gpio_status;
 
-int findbox=0;
+int findbox = 0;
 float bili = 0.0;
 int bias_center = 0;
 int UltrasonicGetLength(void);
@@ -128,7 +128,6 @@ int main(void)
 {
     clock_init(SYSTEM_CLOCK_600M);  // 不可删除
     debug_init();                   // 调试端口初始化
-	  zhouqipit_init();     //周期中断初始化
     fifo_init(&uart_data_fifo, FIFO_DATA_8BIT, uart_get_data, 64);              // 初始化 fifo 挂载缓冲区
     system_delay_ms(100);           //等待主板其他外设上电完成
     ips200_init(IPS200_TYPE);       //显示屏初始化
@@ -162,27 +161,27 @@ int main(void)
 	  anglePID_DefaultInit();      //角度PID初始化
 		imu660ra_init();             //陀螺仪初始化
 		gyroOffset_init();//陀螺仪零漂初始化
-		state = 1;    //开始循迹
-		
+		zhouqipit_init();     //周期中断初始化
+		gpio_init(B11, GPO, 0, GPO_PUSH_PULL);//蜂鸣器
+		state = 0;    //开始循迹
 		int flag_motor2=0;
 		int flag_motor3=0;
-		int flag_motor4=0;	
+		int flag_motor4=0;
 		int jieshu = 0;
 		int jiaodujj = 0;
 		int jiaodunow = 0;
-		int findkk = 0;
-		int kkkk=0;
+		
     while(1)
     {
         if(mt9v03x_finish_flag)
         {
 					  if (pit0_state == 1)
 						{
-							Get_angle();
-							get_corrd();              //读取当前电机编码器数值
-//							text();
-						  angle_turn = Image_Process();
-							ips200_show_int(0, 248, state, 4);
+							  Get_angle();              //读取角度
+			          get_corrd();              //读取当前电机编码器数值
+			          angle_turn = Image_Process();
+							  text();
+//							ips200_show_int(0, 248, state, 4);
 //							move_control(50,Angle_z,angle_turn);  //80
 //							ips200_show_int(0, 248, Angle_z, 10);
 //							if (flag_stop_Car == 1)
@@ -213,16 +212,12 @@ int main(void)
 //							motor4_position(-9000);
 //						}
 ////						uart_write_byte (UART_1, 'A');
-              if (state == 102)
-							{
-								move_control(100,angle_turn);
-							}
               if (state == -1)
 							{
 								move_control(100,0);  //80
 								jieshu++;
 //								ips200_show_int(0, 264, jieshu, 10);
-								if (jieshu > 60)
+								if (jieshu > 160)
 								{
 									state = 0;
 									Motor_Clear();
@@ -230,13 +225,8 @@ int main(void)
 							}
 				    	if (state == 1)     //正常循迹
 				    	{
-								kongxian++;
-								kkkk++;
-								if (kkkk < 100)
-								{
-									move_control(100,0);
-								}
-								  if (flag_zebra == 1 && findbox == 1)
+								kongxian++;    //空闲时间
+								  if (flag_zebra == 1 && findbox == 1)  //识别到斑马线且没识别到红方块
 									{
 										state = -1;
 										jieshu = 0;
@@ -244,49 +234,54 @@ int main(void)
 									findbox = get_uart1_data;
 								  ips200_show_int(0, 200, findbox, 2);
 									jiaodunow = Angle_z;
-									if (findbox == 1 || kongxian <100)
+									if (findbox == 1 || kongxian <100)  //没识别到红方块
 									{
 										move_control(100,angle_turn);
 									}
 									else
 									{
 										Motor_Clear();
-										system_delay_ms(100);
-										Motor_Clear();
+//										system_delay_ms(100);
+//										Motor_Clear();
+										kongxian = 0;
 										state = 2;
 									}
 				  		    
 			        }
-							if (state == 2)
+							if (state == 2)    //对齐红方块
 							{
 								findbox=get_uart1_data;
-								findkk ++;
 								ips200_show_int(0, 200, findbox, 2);
-								if (findbox == 2)      //车在左边
+								if (Angle_z - jiaodunow < 10 || Angle_z - jiaodunow > -10)
+								{
+									if (findbox == 2)      //车在左边
 	              {
-		              speed_and_angle(8,jiaodunow);
+		              speed_and_angle(10,jiaodunow);
                 }
 								if (findbox == 3)     //车在右边
                 {
-                  speed_and_angle(-8,jiaodunow);
+                  speed_and_angle(-10,jiaodunow);
                 }
 	              if (findbox == 4)    //车靠后
 	              {
 //		              set_motor_speed(-30,0,30);
 									text111(-10,0,10);
 	              }
+//								if (findbox == 1)
+//								{
+//									text111(10,0,-10);
+//								}
 	              if (findbox == 5)   
 	              {
 		              Motor_Clear();
-									system_delay_ms(100);
-									Motor_Clear();
+//									system_delay_ms(100);
+//									Motor_Clear();
 									state = 3;
-									findkk = 0;
 	              }
-								if (findkk > 800)
+							  }
+								else
 								{
-									state = 1;
-									Motor_Clear();
+									text111(-Angle_z + jiaodunow,-Angle_z + jiaodunow,-Angle_z + jiaodunow);
 								}
 							}
 							if (state == 3)     //判断图片类型
@@ -344,21 +339,22 @@ int main(void)
 								 }
 								 jieguoxianshi(faajishu, fifo_data_count);
 							  	 ips200_show_int(0, 248, state, 10);
-								 system_delay_ms(100);
+//								 system_delay_ms(100);
 								 jiaodunow = Angle_z;
 								 jiaodujj = angle_turn;
+								 Motor_Clear();
 					     }
 							if (state == 4)        //左推箱子
 							{
-										 if (Angle_z - jiaodunow >= 35 - jiaodujj*0.7)
-//								     if (Angle_z - 90 >= 35)
+//										 if (Angle_z - jiaodunow >= 70 - jiaodujj*0.7)
+								     if (Angle_z - 90 >= 70)
 		                 {
 			                 Motor_Clear();
 											 state = 5;
 		                 }
 		                 else
 		                 {
-			                 text111(0,60,-10);
+			                 set_motor_speed(0,70,-15);
 		                 }
 							}
 							if (state == 5)      //前进推出赛道
@@ -369,21 +365,7 @@ int main(void)
 							     time_flag = 1;
 						     }
 								go_time = timer_get(GPT_TIM_1); //获取定时的时间
-								if (go_time <= 2800000)
-								{
-									text111(-60,0,60);
-								}
-								else
-								{
-									Motor_Clear();
-									shijian = go_time;
-									timer_stop(GPT_TIM_1);                      // 停止定时器
-							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							    go_time = 0;
-							    time_flag = 0;
-								  position_zero();
-									state = 6;
-								}
+								set_motor_speed(-80,0,80);
 								if (go_time >= 1000000 && gpio_get_level(HUI_PIN)==1)  //跑一段时间超出赛道
 								{
 									Motor_Clear();
@@ -396,7 +378,7 @@ int main(void)
 									state = 6;
 								}
 							}
-							if (state == 6)          //回来
+							if (state == 6)          //回到赛道
 							{
 								if (time_flag == 0)
 						     {
@@ -406,7 +388,7 @@ int main(void)
 								go_time = timer_get(GPT_TIM_1); //获取定时的时间
 								if (go_time <= shijian*0.6)
 								{
-									text111(60,0,-60);
+									set_motor_speed(80,0,-80);
 								}
 								else
 								{
@@ -421,28 +403,28 @@ int main(void)
 							}
 							if (state == 7)       //复原角度
 							{
-								if (Angle_z - jiaodunow <= 5)
-//								if (Angle_z - 90 <= 5)
+			          set_motor_speed(-30,-30,-30);
+								//								if (Angle_z - jiaodunow <= 5)
+								if (Angle_z - 90 <= 25)
 		            {
-			             Motor_Clear();
-									 state = 1;
-		             }
-		             else
-		             {
-			             text111(-30,-30,-30);
-		             }
+									if (angle_turn <= 5 && angle_turn >= -5)
+									{
+			               Motor_Clear();
+									   state = 1;
+									}
+		            }
 							}
 							if (state == 8)          //右推箱子
 							{
-								if (Angle_z - jiaodunow <= -35 - jiaodujj*0.7)
-//								if (Angle_z - 90 <= -35)
+								if (Angle_z - jiaodunow <= -70 - jiaodujj*0.7)
+//								if (Angle_z - 90 <= -70)
 		            {
 			            Motor_Clear();
 								  state = 9;
 		            }
 		            else
 		            {
-			            text111(10,-60,0);
+			            set_motor_speed(15,-60,0);
 		            }
 						  }
 							if (state == 9)            //前进
@@ -455,7 +437,7 @@ int main(void)
 								go_time = timer_get(GPT_TIM_1); //获取定时的时间
 								if (go_time <= 2800000)
 								{
-									text111(-60,0,60);
+									set_motor_speed(-80,0,80);
 								}
 								else
 								{
@@ -490,7 +472,7 @@ int main(void)
 								go_time = timer_get(GPT_TIM_1); //获取定时的时间
 								if (go_time <= shijian*0.6)
 								{
-									text111(60,0,-60);
+									set_motor_speed(80,0,-80);
 								}
 								else
 								{
@@ -505,15 +487,15 @@ int main(void)
 							}
 							if (state == 11)
 							{
-								if (Angle_z - jiaodunow >= -5)
+								set_motor_speed(30,30,30);
+								if (Angle_z - jiaodunow >= -25)
 		            {
-			             Motor_Clear();
-									 state = 1;
-		             }
-		             else
-		             {
-			             text111(30,30,30);
-		             }
+									if (angle_turn <= 5 && angle_turn >= -5)
+									{
+			               Motor_Clear();
+									   state = 1;
+									}
+		            }
 							}
 					  pit0_state = 0;                   // 清空周期中断触发标志位
 			  	}
@@ -676,9 +658,11 @@ void text(void)
 //	SetMotorCurrent(3,2550);  //目前向右走
 //  SetMotorCurrent(4,-1700);
 //	  set_motor_speed(-30,60,-30);
-//	speed_and_angle(10,0);
-//	text111(-10,20,-10);
+//	speed_and_angle(10,90);
+//	text111(10,0,-10);
 //	text111(0,30,0);
+//	  speed_and_angle(10,90);
+	set_motor_speed(0,70,-15);
 	
 	//编码器测试
 //	get_corrd();              //读取当前电机编码器数值
@@ -792,4 +776,8 @@ void text(void)
 //				 text111(0,30,0);
 //			 else
 //				 text111(0,0,0);
+
+//      //蜂鸣器测试
+//      gpio_set_level(B11, 1);   //启动蜂鸣器
+//			gpio_set_level(B11, 0);   //关闭蜂鸣器
 }
