@@ -27,11 +27,11 @@ void gyroOffset_init(void)      /////////陀螺仪零飘初始化
 	  uint16_t i;
     GyroOffset.Zdata = 0;
     for ( i= 0; i < 1000; ++i) {
-        imu963ra_get_gyro();
+        imu660ra_get_gyro();
 		    GyroOffset.Zdata += imu660ra_gyro_z;
 		  	GyroOffset.Ydata += imu660ra_gyro_y;
         GyroOffset.Xdata += imu660ra_gyro_x;
-        system_delay_ms(5);
+        system_delay_ms(1);
     }
 
     GyroOffset.Zdata /= 1000;
@@ -53,8 +53,8 @@ void ICM20602_newValues(void)
   float sum=0;
 	 
 	imu660ra_get_gyro();	
-	Gyro_z = (float)(imu660ra_gyro_z-GyroOffset.Zdata)/14.285f;    //减去零漂，换算为角加速度(15.1)
-	if(abs(Gyro_z)<0.1)//角加速度小于0.1时  默认为小车静止  
+	Gyro_z = (float)(imu660ra_gyro_z-GyroOffset.Zdata)/16.4f;    //减去零漂，换算为角加速度(15.1)
+	if(abs(Gyro_z)<10)//角加速度小于0.1时  默认为小车静止  
 	{
 		Gyro_z = 0;
 	}
@@ -74,8 +74,8 @@ void ICM20602_newValuesy(void)
   float sum=0;
 	 
 	imu660ra_get_gyro();	
-	Gyro_y = (float)(imu660ra_gyro_y-GyroOffset.Ydata)/14.285f;    //减去零漂，换算为角加速度(15.1)
-	if(abs(Gyro_y)<0.1)//角加速度小于0.1时  默认为小车静止  
+	Gyro_y = (float)(imu660ra_gyro_y-GyroOffset.Ydata)/16.4f;    //减去零漂，换算为角加速度(15.1)
+	if(abs(Gyro_y)<10)//角加速度小于0.1时  默认为小车静止  
 	{
 		Gyro_y = 0;
 	}
@@ -95,8 +95,8 @@ void ICM20602_newValuesx(void)
   float sum=0;
 	 
 	imu660ra_get_gyro();	
-	Gyro_x = (float)(imu660ra_gyro_x-GyroOffset.Xdata)/14.285f;    //减去零漂，换算为角加速度(15.1)
-	if(abs(Gyro_x)<0.1)//角加速度小于0.1时  默认为小车静止  
+	Gyro_x = (float)(imu660ra_gyro_x-GyroOffset.Xdata)/16.4f;    //减去零漂，换算为角加速度(15.1)
+	if(abs(Gyro_x)<10)//角加速度小于0.1时  默认为小车静止  
 	{
 		Gyro_x = 0;
 	}
@@ -121,8 +121,8 @@ void Get_angle(void)
    ICM20602_newValues();
 	 ICM20602_newValuesy();
 	 ICM20602_newValuesx();
-	 Angle_z -= filer_Gyro_z*dt;
-	 Angle_y -= filer_Gyro_y*dt;
-	 Angle_x -= filer_Gyro_x*dt;
+	 Angle_z -= filer_Gyro_z*dt*10;
+	 Angle_y -= filer_Gyro_y*dt*10;
+	 Angle_x -= filer_Gyro_x*dt*10;
 	 ips200_show_int(0, 284, Angle_z, 4);
 }

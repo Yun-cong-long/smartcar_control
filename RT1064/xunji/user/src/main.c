@@ -163,7 +163,7 @@ int main(void)
 		gyroOffset_init();//陀螺仪零漂初始化
 		zhouqipit_init();     //周期中断初始化
 		gpio_init(B11, GPO, 0, GPO_PUSH_PULL);//蜂鸣器
-		state = 0;    //开始循迹
+		state = 1;    //开始循迹
 		int flag_motor2=0;
 		int flag_motor3=0;
 		int flag_motor4=0;
@@ -173,14 +173,15 @@ int main(void)
 		
     while(1)
     {
-        if(mt9v03x_finish_flag)
-        {
-					  if (pit0_state == 1)
-						{
-							  Get_angle();              //读取角度
-			          get_corrd();              //读取当前电机编码器数值
+				if (pit0_state == 1)
+					{
+						Get_angle();              //读取角度
+			      get_corrd();              //读取当前电机编码器数值
+					  if(mt9v03x_finish_flag)
+            {
 			          angle_turn = Image_Process();
-							  text();
+				    }
+//							  text();
 //							ips200_show_int(0, 248, state, 4);
 //							move_control(50,Angle_z,angle_turn);  //80
 //							ips200_show_int(0, 248, Angle_z, 10);
@@ -236,7 +237,7 @@ int main(void)
 									jiaodunow = Angle_z;
 									if (findbox == 1 || kongxian <100)  //没识别到红方块
 									{
-										move_control(100,angle_turn);
+										move_control(150,angle_turn);
 									}
 									else
 									{
@@ -252,7 +253,7 @@ int main(void)
 							{
 								findbox=get_uart1_data;
 								ips200_show_int(0, 200, findbox, 2);
-								if (Angle_z - jiaodunow < 10 || Angle_z - jiaodunow > -10)
+								if (Angle_z - jiaodunow < 10 && Angle_z - jiaodunow > -10)
 								{
 									if (findbox == 2)      //车在左边
 	              {
@@ -265,7 +266,7 @@ int main(void)
 	              if (findbox == 4)    //车靠后
 	              {
 //		              set_motor_speed(-30,0,30);
-									text111(-10,0,10);
+									text111(-12,0,12);
 	              }
 //								if (findbox == 1)
 //								{
@@ -286,6 +287,7 @@ int main(void)
 							}
 							if (state == 3)     //判断图片类型
 					    {
+								 system_delay_ms(1000);
 						     uart_write_byte (UART_4, 'A');
 								 faajishu++;
 					       system_delay_ms(1000);
@@ -346,8 +348,8 @@ int main(void)
 					     }
 							if (state == 4)        //左推箱子
 							{
-//										 if (Angle_z - jiaodunow >= 70 - jiaodujj*0.7)
-								     if (Angle_z - 90 >= 70)
+										 if (Angle_z - jiaodunow >= 70 - jiaodujj*0.7)
+//								     if (Angle_z - 90 >= 70)      //测试用
 		                 {
 			                 Motor_Clear();
 											 state = 5;
@@ -404,20 +406,20 @@ int main(void)
 							if (state == 7)       //复原角度
 							{
 			          set_motor_speed(-30,-30,-30);
-								//								if (Angle_z - jiaodunow <= 5)
-								if (Angle_z - 90 <= 25)
+								if (Angle_z - jiaodunow <= 15)
+//								if (Angle_z - 90 <= 40)
 		            {
-									if (angle_turn <= 5 && angle_turn >= -5)
-									{
+//									if (angle_turn <= 5 && angle_turn >= -5)
+//									{
 			               Motor_Clear();
 									   state = 1;
-									}
+//									}
 		            }
 							}
 							if (state == 8)          //右推箱子
 							{
 								if (Angle_z - jiaodunow <= -70 - jiaodujj*0.7)
-//								if (Angle_z - 90 <= -70)
+//								if (Angle_z - 90 <= -70)         //测试用
 		            {
 			            Motor_Clear();
 								  state = 9;
@@ -435,21 +437,7 @@ int main(void)
 							     time_flag = 1;
 						     }
 								go_time = timer_get(GPT_TIM_1); //获取定时的时间
-								if (go_time <= 2800000)
-								{
-									set_motor_speed(-80,0,80);
-								}
-								else
-								{
-									Motor_Clear();
-									shijian = go_time;
-									timer_stop(GPT_TIM_1);                      // 停止定时器
-							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
-							    go_time = 0;
-							    time_flag = 0;
-								  position_zero();
-									state = 10;
-								}
+								set_motor_speed(-80,0,80);
 								if (go_time >= 1000000 && gpio_get_level(HUI_PIN)==1)  //跑一段时间超出赛道
 								{
 									Motor_Clear();
@@ -488,18 +476,18 @@ int main(void)
 							if (state == 11)
 							{
 								set_motor_speed(30,30,30);
-								if (Angle_z - jiaodunow >= -25)
+								if (Angle_z - jiaodunow >= -15)
+//								if (Angle_z - jiaodunow >= -40)
 		            {
-									if (angle_turn <= 5 && angle_turn >= -5)
-									{
+//									if (angle_turn <= 5 && angle_turn >= -5)
+//									{
 			               Motor_Clear();
 									   state = 1;
-									}
+//									}
 		            }
 							}
 					  pit0_state = 0;                   // 清空周期中断触发标志位
 			  	}
-        }
     }
 }
 
@@ -661,8 +649,8 @@ void text(void)
 //	speed_and_angle(10,90);
 //	text111(10,0,-10);
 //	text111(0,30,0);
-//	  speed_and_angle(10,90);
-	set_motor_speed(0,70,-15);
+	  speed_and_angle(10,90);
+//	set_motor_speed(0,70,-15);
 	
 	//编码器测试
 //	get_corrd();              //读取当前电机编码器数值

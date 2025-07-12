@@ -94,9 +94,9 @@ void anglePID_DefaultInit(void){				//角度PID参数初始化
 //	PID_SetTargetWithNormal(&angle1_PID,0.0);
 	
 	PID_DefaultInit(&angle2_PID);
-	angle2_PID.Kp1 = 50.0f;				//  40.0 4.0 0.8
-	angle2_PID.Ki1 = 5.0f;			//
-	angle2_PID.Kd1 = 1.0f;  //
+	angle2_PID.Kp1 = 30.0f;				//5
+	angle2_PID.Ki1 = 2.0f;			//
+	angle2_PID.Kd1 = 2.8f;  //
 //	angle_PID.RampTartgetStep = 2;
 	angle2_PID.PID_OutMax = 8000;	
 //	angle_PID.RampCountTime=99;
@@ -106,9 +106,9 @@ void anglePID_DefaultInit(void){				//角度PID参数初始化
 	PID_SetTargetWithNormal(&angle2_PID,0.0);
 	
 	PID_DefaultInit(&angle3_PID);
-	angle3_PID.Kp1 = 50.0f;				//100
-	angle3_PID.Ki1 = 5.0f;			//
-	angle3_PID.Kd1 = 1.0f;  //
+	angle3_PID.Kp1 = 30.0f;				//100
+	angle3_PID.Ki1 = 2.0f;			//
+	angle3_PID.Kd1 = 2.8f;  //
 //	angle_PID.RampTartgetStep = 2;
 	angle3_PID.PID_OutMax = 8000;	
 //	angle_PID.RampCountTime=99;
@@ -118,9 +118,9 @@ void anglePID_DefaultInit(void){				//角度PID参数初始化
 	PID_SetTargetWithNormal(&angle3_PID,0.0);
 	
 	PID_DefaultInit(&angle4_PID);
-	angle4_PID.Kp1 = 50.0f;				//5
-	angle4_PID.Ki1 = 5.0f;			//
-	angle4_PID.Kd1 = 1.0f;  //
+	angle4_PID.Kp1 = 30.0f;				// 原来 40 4 0.8
+	angle4_PID.Ki1 = 2.0f;			//
+	angle4_PID.Kd1 = 2.8f;  //
 //	angle_PID.RampTartgetStep = 2;
 	angle4_PID.PID_OutMax = 8000;	
 //	angle_PID.RampCountTime=99;
@@ -403,7 +403,7 @@ void move_control(float move_speed, float turn_angle)
 {
 	float z_speed;
 	float motor2_speed, motor3_speed, motor4_speed;
-	float z_p = 3.6;  // 1.8在80原  0.3在80现  3.6在100现
+	float z_p = 5.0;  // 1.8在80原  0.3在80现  3.0在100/120现  5.0在150现
 	z_speed =  - turn_angle;
 	if (z_speed > 180)
 		z_speed = z_speed - 360;
@@ -480,9 +480,9 @@ void speed_and_angle(float speed, float angle)
 ////	}
 //	Motor_Speed_PID();
     float motor2_speed, motor3_speed, motor4_speed;
-		motor2_speed = -speed + ANGLE_TO_RAD(angle - Angle_z) + imu660ra_gyro_z/60;
-		motor3_speed = 2*speed + ANGLE_TO_RAD(angle - Angle_z) + imu660ra_gyro_z/60;
-		motor4_speed = -speed + ANGLE_TO_RAD(angle - Angle_z) + imu660ra_gyro_z/60;
+		motor2_speed = -speed + ANGLE_TO_RAD(angle - Angle_z)*5 + imu660ra_gyro_z/20;
+		motor3_speed = 2*speed + ANGLE_TO_RAD(angle - Angle_z)*5 + imu660ra_gyro_z/20;
+		motor4_speed = -speed + ANGLE_TO_RAD(angle - Angle_z)*5 + imu660ra_gyro_z/20;
 //		motor2_speed = -speed;
 //		motor3_speed = 2*speed;
 //		motor4_speed = -speed;
