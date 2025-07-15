@@ -263,7 +263,7 @@ int flag_right_Ysite_2 = 0;         //十字右边线第二个拐点是否找到的标志
 
 /**********************陀螺仪的角度累加值，定义在这主要是为了两个cpu都能使用*/
 float Angle_Sum_z = 0.0;              //角度值累加
-
+float Angle_Sum_z2 = 0.0;              //角度值累加
 
 float speed_init = 0;                //60
 int flag_BiZhang = 0;
@@ -292,7 +292,7 @@ float fuzzy_bias_dot[7]={0.0};          //偏差变化率的隶属度
 float bias = 0.0;                       //偏差
 float bias_last = 0.0;                  //上次的偏差
 float bias_dot = 0.0;                   //偏差变化率
-
+float Anglett = 0.0;
 float dot_Kp = 0.0;                     //模糊化结果
 
 //模糊规则
@@ -1866,7 +1866,7 @@ void find_zebra()
         }
     }
 
-    if(black_white_num >= 80 && flag_out == 0 && flag_left_ring == 0 && flag_right_ring == 0)             //小车在断路中好像也能识别为斑马线
+    if(black_white_num >= 80 && flag_out == 0)             //小车在断路中好像也能识别为斑马线
     {
         flag_zebra = 1;
     }
@@ -3696,7 +3696,7 @@ float Slope_cal(void)
 		A1=A1/20;
 		A2=A2/20;
 		A3=A3/20;
-		B=A1;
+		B=A2;
 		tem=atan((B-40)/30);
 		slope=tem*(180/3.14);//控制角度介于正负53.13度
 //		if (left_ring_process == 3)
@@ -3733,20 +3733,22 @@ float Slope_cal_2(void)
 		B=A1*0.5+A2*0.3+A3*0.2;
 		tem=atan((B-40)/30);
 		slope=tem*(180/3.14);//控制角度介于正负53.13度
-//		if (flag_left_ring == 1)
-//		{
-		if (left_ring_process == 3)
-			slope = -8;
-//		if (left_ring_process == 4 && slope > 0)
-//			slope = 0;
-//	  }
-		if (flag_right_ring == 1)
+		if (flag_right_ring == 0)
 		{
-		if (right_ring_process == 3)
-		  slope = 8;
-		if (right_ring_process == 4 && slope < 0)
-			slope = 0;
-	  }
+			Angle_Sum_z = 0;
+		}
+		if (flag_right_ring != 0)
+		{
+		if (flag_right_ring == 2 && Angle_Sum_z < 100)
+		{
+			slope = 7;
+			Angle_Sum_z++;
+		}
+		if (flag_right_ring == 3)
+		{
+			slope = 10; 
+		}
+		}
 		return slope;
 }
 
@@ -5069,133 +5071,7 @@ void find_right_ring_2()
 
     }
 }
-void find_right_ring_3()
-{
-	int i= 0;
-    if(flag_right_ring == 0)
-    {
-    for(i=53;i>=ImageStatus.OFFLine;i--)                       //后五行因为之前扫线程序的原因，标识符均为‘T’，会影响我之后的判断，故跳过他们开始循环
-    {
-        if(flag_right_ring_point_1 == 0 && ImageDeal[i].IsRightFind == 'T' && ImageDeal[i-1].IsRightFind == 'W')
-        {
-            flag_right_ring_point_1 = 1;                         //右环岛从下往上的第一个拐点被找到并记录位置
-            right_ring_point_1 = i;
-        }
-        if(flag_right_ring_point_1 == 1 && flag_right_ring_point_2 == 0 && ImageDeal[i].IsRightFind == 'W' && ImageDeal[i-1].IsRightFind == 'T')                    //只有第一个找到才接着去找剩下两个点
-        {
-            flag_right_ring_point_2 = 1;                         //右环岛从下往上的第2个拐点被找到并记录位置
-            right_ring_point_2 = i-1;
-        }
-        if(flag_right_ring_point_1 == 1 && flag_right_ring_point_2 == 1 && flag_right_ring_point_3 == 0 && ImageDeal[i].IsRightFind == 'T' && ImageDeal[i-1].IsRightFind == 'W')                    //只有前面的拐点找到了才去找剩下的
-        {
-            flag_right_ring_point_3 = 1;                         //右环岛从下往上的第3个拐点被找到并记录位置
-            right_ring_point_3 = i;
-        }
-        if(flag_right_ring_point_1 == 1 && flag_right_ring_point_2 == 1 && flag_right_ring_point_3 == 1 && flag_right_ring_point_4 == 0 && ImageDeal[i].IsRightFind == 'W' && ImageDeal[i-1].IsRightFind == 'T')                    //只有前面的拐点找到了才去找剩下的
-        {
-            flag_right_ring_point_4 = 1;                         //右环岛从下往上的第4个拐点被找到并记录位置
-            right_ring_point_4 = i-1;
-            break;
-        }
-    }
 
-    //右环岛的判断还得要求左边线为直道，这里借用一下赛道元素识别的参数来判断左边线是否为长直道
-    for(i=53;i>=ImageStatus.OFFLine;i--)
-    {
-        if(ImageDeal[i].IsRightFind == 'W' && ImageDeal[i -1].IsRightFind == 'T')
-        {
-            y_left_road_tempt = i;
-            break;
-        }
-    }
-    a2 = (ImageDeal[y_left_road_tempt-4].LeftBorder - ImageDeal[y_left_road_tempt-7].LeftBorder)/3.0;
-    BB2 = ImageDeal[y_left_road_tempt-4].LeftBorder - a2 * (y_left_road_tempt-63);
-    
-    for(i = y_left_road_tempt-2;i > ImageStatus.OFFLine;i--)
-    {
-//			ips200_show_int(0, 216, (a2*(i-59) + BB2) - ImageDeal[i].RightBorder, 10);
-        if(((a2*(i-59) + BB2) - ImageDeal[i].LeftBorder) > 3 || ((a2*(i-59) + BB2) - ImageDeal[i].LeftBorder) < -3)
-        {
-            break;
-        }
-    }
-     y_left_length = y_left_road_tempt - i;
-
-    //判断是否为右环岛,右边找到四个拐点，左边线为直道
-    if(flag_right_ring_point_1 == 1 && flag_right_ring_point_2 == 1 && flag_right_ring_point_3 == 1 && flag_right_ring_point_4 == 1 && y_left_length >= 25 && Enter_Crosses_Process == 0)
-    {
-        flag_right_ring = 1;
-        right_ring_process = 1;              //进入右环岛过程1，即右边能找到4个拐点
-    }
-   /* else
-        flag_left_ring = 0;*/
-//							 ips200_show_int(50, 268, right_ring_point_1, 2);
-//							 ips200_show_int(100, 268, right_ring_point_2, 2);
-//							 ips200_show_int(90, 284, right_ring_point_3, 2);
-//							 ips200_show_int(110, 284, right_ring_point_4, 2);
-    flag_right_ring_point_1 = 0;             //清除以免影响下一次程序进入该函数时条件误判
-    flag_right_ring_point_2 = 0;
-    flag_right_ring_point_3 = 0;
-    flag_right_ring_point_4 = 0;
-		right_ring_point_1_tempt = 0;
-        right_ring_point_2_tempt = 0;
-        right_ring_point_3_tempt = 0;
-        right_ring_point_4_tempt = 0;
-    }
-		if(right_ring_process == 1)
-		{
-			 for(i=ImageStatus.OFFLine;i<=53;i++)                       //后五行因为之前扫线程序的原因，标识符均为‘T’，会影响我之后的判断，故跳过他们开始循环
-         {
-					 if(flag_right_ring_point_4 == 0 && ImageDeal[i].IsRightFind == 'W' && ImageDeal[i-1].IsRightFind == 'T')                    //只有前面的拐点找到了才去找剩下的
-                   {
-                       flag_right_ring_point_4 = 1;                         //右环岛从下往上的第4个拐点被找到并记录位置
-                       right_ring_point_4_tempt = i-1;
-//										   ips200_show_int(0, 248, left_ring_point_4_tempt, 10);
-//										   if(right_ring_point_4_tempt > 18 && right_ring_point_4_tempt < 26 && right_ring_point_3_tempt != 0 && right_ring_point_2_tempt != 0)
-										 if (right_ring_point_4_tempt > 18 && right_ring_point_4_tempt < 26)
-                       {        
-												   
-//												   Angle_Sum_z=Angle_z;
-												   right_ring_process = 3;
-                           break;
-                       }
-                       
-                   }
-				 }
-				 flag_right_ring_point_1 = 0;             //清除以免影响下一次程序进入该函数时条件误判
-        flag_right_ring_point_2 = 0;
-        flag_right_ring_point_3 = 0;
-        flag_right_ring_point_4 = 0;
-
-        right_ring_point_1_tempt = 0;
-        right_ring_point_2_tempt = 0;
-        right_ring_point_3_tempt = 0;
-        right_ring_point_4_tempt = 0;
-		}
-		if (right_ring_process == 3)
-		{
-			if(flag_clear_process_3_right == 0)
-            {
-                Angle_Sum_z = 0.0;
-                flag_clear_process_3_right = 1;
-            }
-						Angle_Sum_z++;
-            if(Angle_Sum_z > 80)                      //左环岛左转一定角度从过程3进入过程4
-            {
-                right_ring_process = 4;
-							flag_clear_process_3_right = 0;
-            }
-		}
-        flag_right_ring_point_1 = 0;             //清除以免影响下一次程序进入该函数时条件误判
-        flag_right_ring_point_2 = 0;
-        flag_right_ring_point_3 = 0;
-        flag_right_ring_point_4 = 0;
-
-        right_ring_point_1_tempt = 0;
-        right_ring_point_2_tempt = 0;
-        right_ring_point_3_tempt = 0;
-        right_ring_point_4_tempt = 0;
-}
 void Element_Judgment_Right_Rings()
 {
 	int flag_Ysite=0,flag_Xsite=0,flag_Ysite_1=0,flag_Xsite_1=0;
@@ -5772,6 +5648,222 @@ void Element_Judgment_Right_Rings()
         }
     }
 }
+//左环岛都识别
+void find_left_ring_3(void)
+{
+    int i,j;
+    int r_st_up,r_st_dw;
+    int st_cha,st_num_uper,st_num_down; // 判断直道
+    int w_num; // 左丢边计数
+    int lower_point; //最底下的拐点
+    int longer_num; // 出环岛检测
+//	  if(Enter_Crosses_Process == 1)
+//		{
+//			flag_left_ring = 0;
+//		}
+    if(Enter_Crosses_Process == 0) // 不能是十字路口，优先级要比十字路口低
+    {
+        if(flag_left_ring == 0)
+        {
+            r_st_dw = ImageDeal[32].RightBorder;
+            r_st_up = ImageDeal[28].RightBorder;
+            int k = (r_st_up - r_st_dw)/(28-32);
+            for(i=45;i>=ImageStatus.OFFLine;i--) // 寻找特征，判断是否是环岛
+            {
+                // 先看右边是否是直道
+                st_cha = ImageDeal[i].RightBorder - (k*(i-45)+r_st_dw);
+                if(st_cha < 4 && st_cha > -4)
+                {
+                    st_num_uper++;
+                }
+                else{
+                    break;
+                }
+            }
+						 for(i=ImageStatus.OFFLine;i<=45;i++) // 从上往下寻找特征，判断是否是环岛
+            {
+                // 先看右边是否是直道
+                st_cha = ImageDeal[i].RightBorder - (k*(i-45)+r_st_dw);
+                if(st_cha < 4 && st_cha > -4)
+                {
+                    st_num_down++;
+                }
+                else{
+                    break;
+                }
+            }
+            for(i=55;i>=ImageStatus.OFFLine;i--) // 左边丢边行数
+            {
+                if(ImageDeal[i].IsLeftFind == 'W')
+                {
+                    w_num++;
+                }
+            }
+
+            if(((st_num_uper >= 20)||(st_num_down>=20))&& w_num >= 15)
+            {
+                flag_left_ring = 1;
+            }
+//						st_num = 0;
+//						w_num = 0;
+        }
+        if(flag_left_ring == 1) // 找到环岛进入下一个阶段
+        {
+            for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
+            {
+//							if(ImageDeal[i].LeftBorder - ImageDeal[i-1].LeftBorder > 6)
+                if(ImageDeal[i].IsLeftFind == 'T' && (ImageDeal[i-1].IsLeftFind == 'W'||ImageDeal[i-1].IsLeftFind == 'H'))
+                {
+                    lower_point = i;
+                    break;
+                }
+            }
+            if(lower_point>30 && lower_point<40)
+            {
+              flag_left_ring = 2;
+							lower_point = 0;
+            }
+        }
+        if(flag_left_ring == 2) // 小车以omu（电阻单位符号）的形状入环
+        {
+            // 电控控制小车左转,然后寻弯道
+            zhuan++;
+            for(i=40;i>=20;i--)
+            {
+                if((ImageDeal[i].IsLeftFind=='W' && ImageDeal[i].IsRightFind=='W')||(ImageDeal[i].RightBorder - ImageDeal[i].LeftBorder > 70))
+							  {
+                    longer_num ++;
+                }
+            }
+            if(longer_num > 10 && zhuan > 300)
+            {
+                flag_left_ring = 3;
+							zhuan = 0;
+            }
+
+						longer_num = 0;
+        }
+        if(flag_left_ring == 3) // 出环岛
+        {
+					zhuan++;
+					if (zhuan > 60)
+					{
+						flag_left_ring = 0;
+					}
+            // 电控控制小车出环，即左转出环
+            // 电控写小车出环条件，用陀螺仪记录航向角左转一定程度，使flag_left_ring == 0
+        }
+//				ips200_show_int(0, 216, st_num_uper, 2);
+//				ips200_show_int(0, 232, w_num, 2);
+//				ips200_show_int(0, 248, lower_point, 2);
+    }
+}
+void find_right_ring_3(void)
+{
+	  int i,j;
+    int r_st_up2,r_st_dw2;
+    int st_cha2,st_num_uper2,st_num_down2; // 判断直道
+    int w_num2; // 左丢边计数
+    int lower_point2; //最底下的拐点
+    int longer_num2=0; // 出环岛检测
+    if(Enter_Crosses_Process == 0) // 不能是十字路口，优先级要比十字路口低
+    {
+        if(flag_right_ring == 0)
+        {
+            r_st_dw2 = ImageDeal[32].LeftBorder;
+            r_st_up2 = ImageDeal[28].LeftBorder;
+            int k = (r_st_up2 - r_st_dw2)/(28-32);
+            for(i=45;i>=ImageStatus.OFFLine;i--) // 寻找特征，判断是否是环岛
+            {
+                // 先看右边是否是直道
+                st_cha2 = ImageDeal[i].LeftBorder - (k*(i-32)+r_st_dw2);
+                if(st_cha2 < 4 && st_cha2 > -4)
+                {
+                    st_num_uper2++;
+                }
+                else{
+                    break;
+                }
+            }
+						 for(i=ImageStatus.OFFLine+3;i<=45;i++) // 从上往下寻找特征，判断是否是环岛
+            {
+                // 先看右边是否是直道
+                st_cha2 = ImageDeal[i].LeftBorder - (k*(i-32)+r_st_dw2);
+                if(st_cha2 < 4 && st_cha2 > -4)
+                {
+                    st_num_down2++;
+                }
+                else{
+                    break;
+                }
+            }
+            for(i=55;i>=ImageStatus.OFFLine;i--) // 左边丢边行数
+            {
+                if(ImageDeal[i].IsRightFind == 'W')
+                {
+                    w_num2++;
+                }
+            }
+
+            if(((st_num_uper2 >= 30)||(st_num_down2>=30))&& w_num2 >= 15 && ImageStatus.OFFLine<15)
+            {
+                flag_right_ring = 1;
+            }
+//						st_num2 = 0;
+						w_num2 = 0;
+        }
+        if(flag_right_ring == 1) // 找到环岛进入下一个阶段
+        {
+            for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
+            {
+                if(ImageDeal[i].IsRightFind == 'T' && ImageDeal[i-1].IsRightFind == 'W' )
+                {
+                    lower_point2 = i;
+                    break;
+                }
+            }
+            if(lower_point2>20 && lower_point2<50)
+            {
+                flag_right_ring = 2;
+							lower_point2 = 0;
+							zhuan = 0;
+            }
+        }
+        if(flag_right_ring == 2) // 小车以omu（电阻单位符号）的形状入环
+        {
+            // 电控控制小车左转,然后寻弯道
+            zhuan++;
+            for(i=40;i>=10;i--)
+            {
+                if((ImageDeal[i].IsLeftFind=='W' && ImageDeal[i].IsRightFind=='W') || (ImageDeal[i].RightBorder - ImageDeal[i].LeftBorder > 65))
+							  {
+                    longer_num2 ++;
+                }
+            }
+            if(longer_num2 > 8 && zhuan > 300)
+            {
+                flag_right_ring = 3;
+							zhuan = 0;
+            }
+//						longer_num2 = 0;
+						ips200_show_int(0, 232, longer_num2, 2);
+
+        }
+        if(flag_right_ring == 3) // 出环岛
+        {
+					zhuan++;
+					if (zhuan > 60)
+					{
+						flag_right_ring = 0;
+					}
+            // 电控控制小车出环，即左转出环
+            // 电控写小车出环条件，用陀螺仪记录航向角左转一定程度，使flag_left_ring == 0
+        }
+//				ips200_show_int(0, 216, st_num_uper, 2);
+//				ips200_show_int(0, 232, w_num, 2);
+//				ips200_show_int(0, 248, lower_point, 2);
+    }
+}
 //----------------------------------------------------------------------------------------------------------------------------------------------
 //图像处理的主函数，将函数放在这个函数里面才能执行
 //----------------------------------------------------------------------------------------------------------------------------------------------
@@ -5781,12 +5873,19 @@ int Image_Process(void)
              Get_BinaryImage();          //图像二值化处理，把采集到的原始灰度图像变成二值化图像。存放在Pixle_hb中80*60
              Get_BaseLine();             //优化之后的搜线算法：得到一副图像的基础边线，也就是最底下五行的边线信息，用来后续处理。
              Get_AllLine();              //优化之后的搜线算法：得到一副图像的全部边线和中线。
-             road_type_2();                   //判断赛道类型
+//             road_type_2();                   //判断赛道类型    可以不用
 	           if (faajishu > 0 && findbox == 1)
 						 {
                 find_zebra();                //识别斑马线
 						 }
+						 
              Element_Judgment_Crosses(); //判断是否为十字路口并对其进行处理
+//						 if(Enter_Crosses_Process == 1)
+//						 {
+//							 flag_right_ring = 0;
+//						 }
+//						 find_left_ring_3();
+//						 find_right_ring_3();
 //             Element_Judgment_Left_Rings();//判断是否为左环岛并对其进行处理
 //             Element_Judgment_Right_Rings();//判断是否为右环岛并对其进行处理
 //						 if (flag_right_ring == 0)
@@ -5797,9 +5896,10 @@ int Image_Process(void)
 //						 {
 //						 find_right_ring_2();
 //						 }
-             find_openRoad();               //识别是否为断路
+						 
+//             find_openRoad();               //识别是否为断路
              //ramp();                      //坡道检测与处理函数
-             bu();                  //转弯丢线补偿
+//             bu();                  //转弯丢线补偿
              stop_car();                //出赛道停车检测
              ips200_show_gray_image(160, 200, Image_Use[0], 80, 60, 80, 60, 0);
 			       ips200_show_gray_image(160, 260, Pixle_hb[0], 80, 60, 80, 60, 0);
@@ -5807,7 +5907,8 @@ int Image_Process(void)
 ////						 Get_angle();
 //					  ips200_show_int(0, 232, Angle_Sum_z, 10);
 //						 ips200_show_int(0, 248, Angle_z, 10);
-//						 ips200_show_int(0, 216, flag_left_ring, 2);
+//						 ips200_show_int(0, 200, flag_left_ring, 2);
+						 
 //						 ips200_show_int(0, 232, left_ring_process, 2);
 //						 ips200_show_int(0, 216, flag_right_ring, 2);
 //						 ips200_show_int(0, 232, right_ring_process, 2);
@@ -5819,6 +5920,7 @@ int Image_Process(void)
 						 
 
     		     angle=Slope_cal_2();
+						 Anglett=Slope_cal();
              Center_line();
 			       Left_right_line();
 //						 ringfig();
