@@ -148,6 +148,8 @@ int loca_j = 0;
 uint8_t cnt_str_open = 0;
 int flag_str_open = 0;
 
+extern int roundabout_type;
+
 int32 cnt_gray = 0;         //一定灰度值点个数计数
 //识别到断路后半秒后再检测是否满足退出断路的条件
 int cnt_openRoad_timeOut = 0;
@@ -194,6 +196,15 @@ int flag_left_ring = 0;         //左环岛识别标志位
 int left_ring_process = 0;      //左环岛过程
 int point_num_left = 0;              //拐点数量
 int zhuan = 0;
+
+//无用
+int suma=1;
+float ratea=0.1;
+extern int s;
+int flag_Xsi;
+int avege_h;
+int varian;
+
 //因为最多同时补两条线，所以我定义两条补线直线的斜率和拮据
 float k_bu_1 = 0.0;
 float b_bu_1 = 0.0;
@@ -456,7 +467,9 @@ uint8 Get_Threshold(uint8* image,uint16 col, uint16 row)
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------
 void Get_BinaryImage(void)
 {
-  Threshold = Get_Threshold(Image_Use[0], LCDW, LCDH);      //这里是一个函数调用，通过该函数可以计算出一个效果很不错的二值化阈值。
+  int a=Get_Threshold(Image_Use[0], LCDW, LCDH);
+	if(a>=10)
+  Threshold =a;      //这里是一个函数调用，通过该函数可以计算出一个效果很不错的二值化阈值。
   uint8 i, j = 0;
   for (i = 0; i < LCDH; i++)                                //遍历二维数组的每一行
   {
@@ -5072,6 +5085,414 @@ void find_right_ring_2()
     }
 }
 
+void Element_Judgment_Left_Rings()
+{
+    int flag_Ysite = 0, flag_Xsite = 0, flag_Ysite_1 = 0, flag_Xsite_1 = 0, flag_rings_1 = 0, average_4, num_white = 0;
+    int flag_Ysite_2 = 0, flag_Xsite_2 = 0, flag_Ysite_3 = 0, flag_Xsite_3 = 0;
+    int flag_P_1, flag_P_2, flag_P_3, average_P, flag_P_num;
+    float Slope_Right_Rings = 0, average_h = 0;
+    int flag_L = 0;
+    if (ImageStatus.Miss_Right_lines - ImageStatus.Miss_High_Right_lines < 5
+        && (ImageStatus.Miss_Middle_Left_lines > 10 || ImageStatus.Miss_High_Left_lines + ImageStatus.Miss_Middle_Left_lines > 18)
+        && Enter_Rings_Process == 0
+        && ImageStatus.OFFLine <= 15) //可能是左环岛   通过找弧，如果找到则不再进入次
+    {
+        int num_WWW = 0, flag_y_WWT = 59;
+        for (Ysite = 54; Ysite > ImageStatus.OFFLine + 1; Ysite--)  //第一条件判断
+        {
+            if (ImageDeal[Ysite].IsLeftFind == 'W' && ImageDeal[Ysite - 1].IsLeftFind == 'W' && ImageDeal[Ysite - 2].IsLeftFind == 'W')
+            {
+                num_WWW++;
+            }
+        }
+        for (Ysite = 54; Ysite > ImageStatus.OFFLine + 1; Ysite--)
+        {
+            if (ImageDeal[Ysite].IsLeftFind == 'W' && ImageDeal[Ysite - 1].IsLeftFind == 'W' && ImageDeal[Ysite - 2].IsLeftFind == 'T')
+            {
+                flag_y_WWT = Ysite + 4;//根据自己摄像头高度设定一个范围
+                break;
+            }
+        }
+        for (Ysite = 54; Ysite > ImageStatus.OFFLine + 5; Ysite--)  //第一条件判断
+        {
+            if (ImageDeal[Ysite].RightBorder >= ImageDeal[Ysite - 2].RightBorder)
+            {
+                continue;
+            }
+            else
+            {
+                flag_y_WWT = 0;
+                break;
+            }
+        }
+        flag_Xsite = 0;
+        flag_Ysite = 0;
+        average_h = 0;
+        if (/*flag_y_WWT >= 13 && flag_y_WWT <= 23 &&*/ num_WWW > 18) //减少运算量  第二条件判断
+        {
+            //有弧型
+            for (Ysite = flag_y_WWT; Ysite > ImageStatus.OFFLine + 1; Ysite--)
+            {
+                if (ImageDeal[Ysite].Left_BlackandWhite <= ImageDeal[Ysite - 1].Left_BlackandWhite)
+                {
+                    flag_Xsite = ImageDeal[Ysite - 1].Left_BlackandWhite;
+                }
+                else if (ImageDeal[Ysite].Left_BlackandWhite > ImageDeal[Ysite - 1].Left_BlackandWhite)
+                {
+                    flag_Xsite = ImageDeal[Ysite].Left_BlackandWhite;
+                    flag_Ysite = Ysite;
+                    average_h = (float)(ImageDeal[Ysite - 1].Left_BlackandWhite
+                        + ImageDeal[Ysite - 2].Left_BlackandWhite
+                        + ImageDeal[Ysite - 3].Left_BlackandWhite) / 3;
+                    if (flag_Xsite > average_h && ImageDeal[flag_Ysite].LeftBorder > 15 && flag_Xsite<40&& ImageDeal[flag_Ysite].LeftBorder < 40)//F:x50,f48,ah25  ,T:s29,f28,ah18
+                    {
+                        Enter_Rings_Process = 1;
+//											gpio_set_level(B11, 1);   //启动蜂鸣器
+												is_roundabout=1;
+												roundabout_type=2;
+                    }
+                }
+            }
+        }
+				flag_Xsi=flag_Xsite;
+				avege_h=average_h;
+        if (Enter_Rings_Process == 1)
+        {
+            //方差判定
+            float midd_k = 0, sum_midd_k = 0, variance = 0;
+            int YY = 0;
+            int  CenterTemp[60] = { 0 };
+            for (Ysite = 55; Ysite > 45; Ysite--)
+            {
+                if (ImageDeal[Ysite].IsRightFind == 'T' && ImageDeal[Ysite - 1].IsRightFind == 'T')
+                {
+                    YY = Ysite;
+                    break;
+                }
+            }
+            midd_k = (float)(ImageDeal[YY].RightBorder - ImageDeal[ImageStatus.OFFLine + 8].RightBorder) / (float)(YY - ImageStatus.OFFLine - 8);
+            for (Ysite = YY; Ysite > ImageStatus.OFFLine + 8; Ysite--)
+            {
+                CenterTemp[Ysite] = ImageDeal[YY].RightBorder - midd_k * (YY - Ysite) + 0.5;
+                sum_midd_k += pow(ImageDeal[Ysite].RightBorder - CenterTemp[Ysite], 2);
+            }
+            variance = sum_midd_k / (YY - ImageStatus.OFFLine - 8);
+						if(varian<variance)
+							varian=variance;
+            //ips114_showint16(161, 0, variance);
+            //ImageStatus.variance_acc = variance;
+
+            //左环岛的判断还得要求右边线为直道，这里借用一下赛道元素识别的参数来判断右边线是否为长直道
+            int i =0;
+            for(i=53;i>=ImageStatus.OFFLine;i--)
+            {
+                if(ImageDeal[i].IsRightFind == 'W' && ImageDeal[i -1].IsRightFind == 'T')
+                {
+                    y_right_road_tempt = i;
+                    break;
+                }
+            }
+            a2 = (ImageDeal[y_right_road_tempt-4].RightBorder - ImageDeal[y_right_road_tempt-7].RightBorder)/3.0;
+            BB2 = ImageDeal[y_right_road_tempt-4].RightBorder - a2 * (y_right_road_tempt-63);
+
+            for(i = y_right_road_tempt-2;i > ImageStatus.OFFLine;i--)
+            {
+                if(((a2*(i-59) + BB2) - ImageDeal[i].RightBorder) > 3 || ((a2*(i-59) + BB2) - ImageDeal[i].RightBorder) < -3)
+                {
+                    break;
+                }
+            }
+             y_right_length = y_right_road_tempt - i;
+
+            if (variance < 2 && y_right_length >= 25)
+            {
+                Enter_Rings_Process = 1;
+                Rings_Nums_Left++;
+							gpio_set_level(B11, 1);   //启动蜂鸣器
+            }
+            else
+            {
+                Enter_Rings_Process = 0;
+            }
+        }
+
+    }
+    if(Enter_Rings_Process == 1)
+    {
+        //flag_stop_Car = 1;
+        if(Enter_Rings_Process == 1 && ImageStatus.Miss_Middle_Left_lines > 12 && Enter_Rings_Flag_1 == 0)//入环处
+        {
+            Enter_Rings_Flag_2 = 1;
+            Enter_Rings_Flag_1 = 1;
+//					gpio_set_level(B11,0);
+        }
+        if(Enter_Rings_Process == 1 && Enter_Rings_Flag_2 == 1 && ImageStatus.Miss_Middle_Left_lines <5)//出环前入环后
+        {
+            if(ImageStatus.OFFLine <= 3)
+            {
+                Enter_Rings_Flag_2 = 0;
+                Enter_Rings_Flag_1 = 6;
+                Enter_Rings_Process = 2;
+                //flag_stop_Car=1;
+            }
+            else
+            {
+                Enter_Rings_Flag_1 = 2;
+                Enter_Rings_Flag_2 = 2;
+
+            }
+       }
+        if(Enter_Rings_Process == 1 && Enter_Rings_Flag_2 == 2 )//出环前入环后
+        {
+            for(Ysite = 55; Ysite > ImageStatus.OFFLine + 3; Ysite--)
+            {
+                if(ImageDeal[Ysite].LeftBorder <= ImageDeal[Ysite - 1].LeftBorder)
+                {
+                    continue;
+                }
+                else if(ImageDeal[Ysite].LeftBorder > ImageDeal[Ysite - 1].LeftBorder)
+                {
+                    if(Ysite>=25)
+                    {
+                            Enter_Rings_Flag_2 = 3;
+                            Enter_Rings_Flag_1 = 3;
+                    }
+                    break;
+                }
+            }
+
+        }
+        if(Enter_Rings_Process == 1 && Enter_Rings_Flag_2 == 3 && ImageStatus.Miss_Right_lines > 25)//进环过程中
+        {
+            Enter_Rings_Flag_3 = 1;
+        }
+        if(Enter_Rings_Process == 1 && Enter_Rings_Flag_3 == 1 && ImageStatus.Miss_Right_lines < 8)//取消第二次补线
+        {
+            Enter_Rings_Flag_3 = 2;
+            Enter_Rings_Flag_2 = 4;
+        }
+        if(Enter_Rings_Process == 1 && Enter_Rings_Flag_3 == 2)//第三次补线标志
+        {
+            for(Ysite = 50; Ysite > ImageStatus.OFFLine + 3; Ysite--)
+            {
+                if(ImageDeal[Ysite].Right_BlackandWhite >= ImageDeal[Ysite - 1].Right_BlackandWhite)
+                {
+                    continue;
+                }
+                else if(ImageDeal[Ysite].Right_BlackandWhite < ImageDeal[Ysite - 1].Right_BlackandWhite)
+                {
+                    if(Ysite>15)
+                    {
+                        Enter_Rings_Flag_3 = 3;
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(Enter_Rings_Process == 1 && Enter_Rings_Flag_3 == 3 && ImageStatus.WhiteLine>20)
+        {
+            Enter_Rings_Flag_3=4;
+        }
+
+        if(Enter_Rings_Process == 1 && Enter_Rings_Flag_3 == 4 && ImageStatus.Miss_Right_lines < 25)//取消第三次补线
+        {
+            Enter_Rings_Flag_3=5;
+        }
+        if(Enter_Rings_Process == 1 && ((Enter_Rings_Flag_3==4&& ImageStatus.OFFLine<=12)||Enter_Rings_Flag_3 == 5))//第四次补线
+        {
+            for(Ysite = ImageStatus.OFFLine + 3; Ysite < 50; Ysite++)
+            {
+                /*如果为W-T跳变*/
+                if(ImageDeal[Ysite].IsLeftFind == 'T' && ImageDeal[Ysite - 2].IsLeftFind == 'W')
+                {
+                    Enter_Rings_Flag_3 = 6;
+                    //flag_stop_Car = 1;
+                    break;
+                }
+            }
+        }
+        if(Enter_Rings_Process == 1 && Enter_Rings_Flag_3 == 6)//取消补线标志位
+        {
+            for(Ysite = 50; Ysite > ImageStatus.OFFLine + 3; Ysite--)
+            {
+                /*如果为W-T跳变*/
+                if(ImageDeal[Ysite].IsLeftFind == 'W' && ImageDeal[Ysite - 2].IsLeftFind == 'T' && Ysite>40)
+                {
+                    Enter_Rings_Flag_3 = 0;
+                    Enter_Rings_Flag_2 = 0;
+                    Enter_Rings_Flag_1 = 0;
+                    Enter_Rings_Process = 0;
+                    //flag_stop_Car = 1;
+                    break;
+                }
+            }
+            if(ImageStatus.Miss_Left_lines<8)
+            {
+                Enter_Rings_Flag_3 = 0;
+                Enter_Rings_Flag_2 = 0;
+                Enter_Rings_Flag_1 = 0;
+                Enter_Rings_Process = 0;
+                cnt_ring++;
+                if(cnt_ring >= max_ring)
+                {
+                    cnt_ring = 0;
+                    flag_ring_man = 1;              //识别到的环岛个数满
+                }
+            }
+        }
+    }
+    //第一阶段补线
+   if(Enter_Rings_Process == 1 && (Enter_Rings_Flag_1 == 0 || Enter_Rings_Flag_1 == 1))
+    {
+            for(Ysite=40;Ysite>5;Ysite--)//上边的拐点
+            {
+                if(ImageDeal[Ysite].IsLeftFind=='W')
+                {
+                    continue;
+                }
+                else if(ImageDeal[Ysite].IsLeftFind=='T')
+                {
+                   if(Pixle[Ysite-1][ImageDeal[Ysite].LeftBorder-1]==1)
+                   {
+                       flag_Xsite_1=ImageDeal[Ysite].LeftBorder;
+                       flag_Ysite_1=Ysite+1;
+
+                   }
+                   else if(Ysite==11)
+                   {
+                       flag_Xsite_1=ImageDeal[Ysite].LeftBorder;
+                       flag_Ysite_1=Ysite;
+                   }
+                }
+                if(flag_Ysite_1!=0&&ImageDeal[flag_Ysite_1-2].IsLeftFind=='T')
+                {
+                    break;
+                }
+            }
+            for(Ysite=55;Ysite>45;Ysite--)//下边拐点
+            {
+                if(ImageDeal[Ysite].IsLeftFind=='W')
+                {
+                    flag_Xsite_2=ImageDeal[Ysite].LeftBorder;
+                    flag_Ysite_2=Ysite;
+                    break;
+                }
+            }
+            Slope_Right_Rings=(float)(flag_Xsite_1-flag_Xsite_2)/(float)(flag_Ysite_2-flag_Ysite_1);
+            if(flag_Xsite_2!=0)//拐点连线
+            {
+                for(Ysite=flag_Ysite_2;Ysite>flag_Ysite_1;Ysite--)
+                {
+                    ImageDeal[Ysite].LeftBorder=flag_Xsite_2+Slope_Right_Rings*(flag_Ysite_2-Ysite);
+                    LimitL(ImageDeal[Ysite].LeftBorder);   //限幅
+                    LimitH(ImageDeal[Ysite].LeftBorder);   //限幅
+                    ImageDeal[Ysite].Center=(ImageDeal[Ysite].RightBorder+ImageDeal[Ysite].LeftBorder)/2;
+                }
+            }
+    }
+   //第二阶段补线
+      if(Enter_Rings_Process==1&&Enter_Rings_Flag_2==3)
+       {
+          if(flag_clear_inRing == 0)
+          {
+              Angle_Sum_z = 0;
+              flag_clear_inRing = 1;
+          }
+          center_avg = 34;                          //模拟左圆环环中的偏差
+          if(Angle_Sum_z > 40)
+          {
+              Enter_Rings_Flag_3 = 2;               //已经进入环中
+              Enter_Rings_Flag_2 = 4;
+              flag_clear_inRing = 0;
+          }
+       }
+   //环中
+     if(Enter_Rings_Process==1&&(Enter_Rings_Flag_3==2||Enter_Rings_Flag_2==5))
+     {
+         for(Ysite=54;Ysite>15;Ysite--)
+         {
+             if(ImageDeal[Ysite].IsLeftFind=='W')
+             {
+                 ImageDeal[Ysite].LeftBorder=1;
+             }
+             else if(Pixle[Ysite][1]==1&&Pixle[Ysite-1][1]==0)
+             {
+                 break;
+             }
+             ImageDeal[Ysite].Center=(ImageDeal[Ysite].RightBorder+ImageDeal[Ysite].LeftBorder)/2;
+         }
+     }
+     //第三次补线
+     if(Enter_Rings_Process == 1 && (Enter_Rings_Flag_3 == 3|| Enter_Rings_Flag_3==4))
+     {
+         flag_Ysite_2 = 0;
+         for(Ysite = 50; Ysite > ImageStatus.OFFLine + 3; Ysite--)
+         {
+             /*找到右边的角点*/
+             if((ImageDeal[Ysite].Right_BlackandWhite - ImageDeal[Ysite - 3].Right_BlackandWhite) < -3
+             && (ImageDeal[Ysite].Right_BlackandWhite - ImageDeal[Ysite + 3].Right_BlackandWhite) < -3)
+             {
+                 /*记录当前偏移后的XY坐标*/
+                 flag_Ysite_2 = Ysite + 2;
+                 flag_Xsite_2 = ImageDeal[Ysite].RightBorder;
+                 break;
+             }
+         }
+         /*没找到右角点*/
+         if(flag_Ysite_2 == 0)
+         {
+             flag_Ysite_2 = 58;
+             flag_Xsite_2 = 78;
+         }
+            flag_Ysite_1 = ImageStatus.OFFLine;
+         flag_Xsite_1 = 5;
+         /*计算斜率*/
+         Slope_Right_Rings = (float)(flag_Xsite_2 - flag_Xsite_1) / (float)(flag_Ysite_2 - flag_Ysite_1);
+         if(flag_Ysite_2 != 0)
+         {
+             for(Ysite = flag_Ysite_1; Ysite <= flag_Ysite_2; Ysite++)
+             {
+                   ImageDeal[Ysite].RightBorder = flag_Xsite_1 + Slope_Right_Rings * (Ysite - flag_Ysite_1);
+                   ImageDeal[Ysite].Center = (ImageDeal[Ysite].RightBorder + ImageDeal[Ysite].LeftBorder) / 2;
+             }
+         }
+     }
+     //第四次补线
+     flag_Ysite_2=0;
+     if(Enter_Rings_Process == 1 && Enter_Rings_Flag_3 == 6)
+     {
+         /*判断条件：寻找左边的W-T跳变*/
+         for(Ysite = 50; Ysite > ImageStatus.OFFLine + 4; Ysite--)
+         {
+             /*如果为W-T跳变*/
+             if(ImageDeal[Ysite].IsLeftFind == 'W' && ImageDeal[Ysite - 2].IsLeftFind == 'T')
+             {
+                 /*记录当前偏移后的XY坐标*/
+                 flag_Ysite_2 = Ysite - 4;
+                 flag_Xsite_2 = ImageDeal[flag_Ysite_2].LeftBorder;
+                 break;
+             }
+         }
+         flag_Ysite_1 = 59;
+         flag_Xsite_1 = 1;
+         /*计算斜率*/
+         Slope_Right_Rings = (float)(flag_Xsite_2 - flag_Xsite_1) / (float)(flag_Ysite_2 - flag_Ysite_1);
+         if(flag_Ysite_2 != 0)
+         {
+             for(Ysite = flag_Ysite_1; Ysite >= flag_Ysite_2; Ysite--)
+             {
+                   ImageDeal[Ysite].LeftBorder = flag_Xsite_1 + Slope_Right_Rings * (Ysite - flag_Ysite_1);
+                   ImageDeal[Ysite].Center = (ImageDeal[Ysite].RightBorder + ImageDeal[Ysite].LeftBorder) / 2;
+             }
+         }
+     }
+}
+
 void Element_Judgment_Right_Rings()
 {
 	int flag_Ysite=0,flag_Xsite=0,flag_Ysite_1=0,flag_Xsite_1=0;
@@ -5758,112 +6179,116 @@ void find_left_ring_3(void)
 //				ips200_show_int(0, 248, lower_point, 2);
     }
 }
-void find_right_ring_3(void)
+//左环岛识别
+void find_left_ring_3()
 {
-	  int i,j;
-    int r_st_up2,r_st_dw2;
-    int st_cha2,st_num_uper2,st_num_down2; // 判断直道
-    int w_num2; // 左丢边计数
-    int lower_point2; //最底下的拐点
-    int longer_num2=0; // 出环岛检测
+    int i,j;
+    int r_st_up,r_st_dw;
+    int st_cha,st_num; // 判断直道
+    int w_num; // 左丢边计数
+    int lower_point=55; //最底下的拐点
+    int uper_point=0; // 第二个拐点
+    int longer_num; // 出环岛检测
     if(Enter_Crosses_Process == 0) // 不能是十字路口，优先级要比十字路口低
     {
-        if(flag_right_ring == 0)
+        if(flag_left_ring == 0)
         {
-            r_st_dw2 = ImageDeal[32].LeftBorder;
-            r_st_up2 = ImageDeal[28].LeftBorder;
-            int k = (r_st_up2 - r_st_dw2)/(28-32);
-            for(i=45;i>=ImageStatus.OFFLine;i--) // 寻找特征，判断是否是环岛
+            r_st_dw = ImageDeal[54].RightBorder;
+            r_st_up = ImageDeal[50].RightBorder;
+            int k = (r_st_up - r_st_dw)/(50-54)
+            for(i=55;i>=ImageStatus.OFFLine;i--) // 寻找特征，判断是否是环岛
             {
                 // 先看右边是否是直道
-                st_cha2 = ImageDeal[i].LeftBorder - (k*(i-32)+r_st_dw2);
-                if(st_cha2 < 4 && st_cha2 > -4)
+                st_cha = ImageDeal[i].RightBorder - (k*(i-54)+r_st_dw)
+                if(st_cha < 2 && st_cha > -2) // 将直道的判断条件收缩，变得更苛刻
                 {
-                    st_num_uper2++;
+                    st_num++;
                 }
                 else{
                     break;
                 }
             }
-						 for(i=ImageStatus.OFFLine+3;i<=45;i++) // 从上往下寻找特征，判断是否是环岛
+            for(i=55;i>=ImageStatus.OFFLine + 1;i--) // *左边丢边行数（划掉）*，现在记录左边赛道正常赛道和丢边的之间跳变数量
             {
-                // 先看右边是否是直道
-                st_cha2 = ImageDeal[i].LeftBorder - (k*(i-32)+r_st_dw2);
-                if(st_cha2 < 4 && st_cha2 > -4)
+                if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind=='T')||
+                (ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1]=='W'))
                 {
-                    st_num_down2++;
-                }
-                else{
-                    break;
-                }
-            }
-            for(i=55;i>=ImageStatus.OFFLine;i--) // 左边丢边行数
-            {
-                if(ImageDeal[i].IsRightFind == 'W')
-                {
-                    w_num2++;
+                    w_num++;
                 }
             }
 
-            if(((st_num_uper2 >= 30)||(st_num_down2>=30))&& w_num2 >= 15 && ImageStatus.OFFLine<15)
+            if(st_num > 30 && w_num >= 3) // 30行直道行，再加3个跳变点
             {
-                flag_right_ring = 1;
+                flag_left_ring = 1;
+            }else{
+                flag_left_ring = 0; //保证不影响其他地方循迹
             }
-//						st_num2 = 0;
-						w_num2 = 0;
         }
-        if(flag_right_ring == 1) // 找到环岛进入下一个阶段
+        if(flag_left_ring == 1) // 找到环岛进入下一个阶段
         {
             for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
             {
-                if(ImageDeal[i].IsRightFind == 'T' && ImageDeal[i-1].IsRightFind == 'W' )
+                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == "H"))
                 {
-                    lower_point2 = i;
+                    lower_point = i;
                     break;
                 }
             }
-            if(lower_point2>20 && lower_point2<50)
+            if(lower_point>30 && lower_point<55)
             {
-                flag_right_ring = 2;
-							lower_point2 = 0;
-							zhuan = 0;
+                flag_left_ring == 2;
+            }else{
+                flag_left_ring == 0;
             }
         }
-        if(flag_right_ring == 2) // 小车以omu（电阻单位符号）的形状入环
+        if(flag_left_ring == 2) // 小车以omu（电阻单位符号）的形状入环
         {
-            // 电控控制小车左转,然后寻弯道
-            zhuan++;
-            for(i=40;i>=10;i--)
+            for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
             {
-                if((ImageDeal[i].IsLeftFind=='W' && ImageDeal[i].IsRightFind=='W') || (ImageDeal[i].RightBorder - ImageDeal[i].LeftBorder > 65))
-							  {
-                    longer_num2 ++;
+                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == "H"))
+                {
+                    lower_point = i;
+                    break;
                 }
             }
-            if(longer_num2 > 8 && zhuan > 300)
+            for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
             {
-                flag_right_ring = 3;
-							zhuan = 0;
+                if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind == 'T')||(ImageDeal[i].IsLeftFind == 'H' && ImageDeal[i-1].IsLeftFind == "T"))
+                {
+                    uper_point = i;
+                    break;
+                }
             }
-//						longer_num2 = 0;
-						ips200_show_int(0, 232, longer_num2, 2);
-
+            // 电控控制小车左转,然后寻弯道
+            ImageStatus.OFFLine = uper_point; // 改变顶端行
+            int k_2 = (ImageDeal[lower_point].LeftBorder - ImageDeal[55].LeftBorder)/(lower_point - 55);
+            for(i=55;i>=lower_point;i--)
+            {
+                ImageDeal[i].LeftBorder = k_2*(i - 55) + ImageDeal[55].LeftBorder; 
+            }
+            int k_1 = (ImageDeal[uper_point].LeftBorder - ImageDeal[55].RightBorder)/(uper_point - 55);
+            for(i=55;i>=ImageStatus.OFFLine;i--)
+            {
+                ImageDeal[i].RightBorder = k_1*(i - 55) + ImageDeal[55].RightBorder; 
+                ImageDeal[i].Center = (ImageDeal[i].RightBorder + ImageDeal[i].LeftBorder)/2;
+            }
+            //电控帮忙：延时几秒;
+            if(/**/)
+            {
+                flag_left_ring == 3
+            }
         }
-        if(flag_right_ring == 3) // 出环岛
+        if(flag_left_ring == 3) // 环岛内
         {
-					zhuan++;
-					if (zhuan > 60)
-					{
-						flag_right_ring = 0;
-					}
+            if(ImageStatus.WhiteLine > 5) //看到出环条件：全白行
             // 电控控制小车出环，即左转出环
             // 电控写小车出环条件，用陀螺仪记录航向角左转一定程度，使flag_left_ring == 0
         }
-//				ips200_show_int(0, 216, st_num_uper, 2);
-//				ips200_show_int(0, 232, w_num, 2);
-//				ips200_show_int(0, 248, lower_point, 2);
     }
 }
+
+// 右环岛对应着写
+
 //----------------------------------------------------------------------------------------------------------------------------------------------
 //图像处理的主函数，将函数放在这个函数里面才能执行
 //----------------------------------------------------------------------------------------------------------------------------------------------
@@ -5873,7 +6298,7 @@ int Image_Process(void)
              Get_BinaryImage();          //图像二值化处理，把采集到的原始灰度图像变成二值化图像。存放在Pixle_hb中80*60
              Get_BaseLine();             //优化之后的搜线算法：得到一副图像的基础边线，也就是最底下五行的边线信息，用来后续处理。
              Get_AllLine();              //优化之后的搜线算法：得到一副图像的全部边线和中线。
-//             road_type_2();                   //判断赛道类型    可以不用
+             road_type_2();                   //判断赛道类型    可以不用
 	           if (faajishu > 0 && findbox == 1)
 						 {
                 find_zebra();                //识别斑马线
@@ -5900,14 +6325,14 @@ int Image_Process(void)
 //             find_openRoad();               //识别是否为断路
              //ramp();                      //坡道检测与处理函数
 //             bu();                  //转弯丢线补偿
-             stop_car();                //出赛道停车检测
+//             stop_car();                //出赛道停车检测
              ips200_show_gray_image(160, 200, Image_Use[0], 80, 60, 80, 60, 0);
 			       ips200_show_gray_image(160, 260, Pixle_hb[0], 80, 60, 80, 60, 0);
 //						 Get_angle();
 ////						 Get_angle();
 //					  ips200_show_int(0, 232, Angle_Sum_z, 10);
 //						 ips200_show_int(0, 248, Angle_z, 10);
-//						 ips200_show_int(0, 200, flag_left_ring, 2);
+						 ips200_show_int(0, 200, Enter_Rings_Flag_3, 2);
 						 
 //						 ips200_show_int(0, 232, left_ring_process, 2);
 //						 ips200_show_int(0, 216, flag_right_ring, 2);

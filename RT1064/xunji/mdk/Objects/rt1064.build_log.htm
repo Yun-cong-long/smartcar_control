@@ -27,13 +27,68 @@ Project File Date:  07/08/2025
 <h2>Output:</h2>
 *** Using Compiler 'V6.19', folder: 'D:\MDK\ARM\ARMCLANG\Bin'
 Build target 'nor_sdram_zf_dtcm'
-compiling imu963ra.c...
-compiling main.c...
-compiling motor_control.c...
+../code/imageprocess.c(6183): error: redefinition of 'find_left_ring_3'
+void find_left_ring_3()
+     ^
+../code/imageprocess.c(6073): note: previous definition is here
+void find_left_ring_3(void)
+     ^
+../code/imageprocess.c(6198): error: expected ';' at end of declaration
+            int k = (r_st_up - r_st_dw)/(50-54)
+                                               ^
+                                               ;
+../code/imageprocess.c(6231): warning: result of comparison against a string literal is unspecified (use an explicit string comparison function instead) [-Wstring-compare]
+                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == "H"))
+                                                                                                                                                      ^  ~~~
+../code/imageprocess.c(6231): warning: comparison between pointer and integer ('uint8' (aka 'unsigned char') and 'char *') [-Wpointer-integer-compare]
+                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == "H"))
+                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~ ^  ~~~
+../code/imageprocess.c(6239): warning: equality comparison result unused [-Wunused-comparison]
+                flag_left_ring == 2;
+                ~~~~~~~~~~~~~~~^~~~
+../code/imageprocess.c(6239): note: use '=' to turn this equality comparison into an assignment
+                flag_left_ring == 2;
+                               ^~
+                               =
+../code/imageprocess.c(6241): warning: equality comparison result unused [-Wunused-comparison]
+                flag_left_ring == 0;
+                ~~~~~~~~~~~~~~~^~~~
+../code/imageprocess.c(6241): note: use '=' to turn this equality comparison into an assignment
+                flag_left_ring == 0;
+                               ^~
+                               =
+../code/imageprocess.c(6248): warning: result of comparison against a string literal is unspecified (use an explicit string comparison function instead) [-Wstring-compare]
+                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == "H"))
+                                                                                                                                                      ^  ~~~
+../code/imageprocess.c(6248): warning: comparison between pointer and integer ('uint8' (aka 'unsigned char') and 'char *') [-Wpointer-integer-compare]
+                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == "H"))
+                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~ ^  ~~~
+../code/imageprocess.c(6256): warning: result of comparison against a string literal is unspecified (use an explicit string comparison function instead) [-Wstring-compare]
+                if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind == 'T')||(ImageDeal[i].IsLeftFind == 'H' && ImageDeal[i-1].IsLeftFind == "T"))
+                                                                                                                                                      ^  ~~~
+../code/imageprocess.c(6256): warning: comparison between pointer and integer ('uint8' (aka 'unsigned char') and 'char *') [-Wpointer-integer-compare]
+                if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind == 'T')||(ImageDeal[i].IsLeftFind == 'H' && ImageDeal[i-1].IsLeftFind == "T"))
+                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~ ^  ~~~
+../code/imageprocess.c(6276): error: expected expression
+            if(/**/)
+                   ^
+../code/imageprocess.c(6278): error: expected ';' after expression
+                flag_left_ring == 3
+                                   ^
+                                   ;
+../code/imageprocess.c(6278): warning: equality comparison result unused [-Wunused-comparison]
+                flag_left_ring == 3
+                ~~~~~~~~~~~~~~~^~~~
+../code/imageprocess.c(6278): note: use '=' to turn this equality comparison into an assignment
+                flag_left_ring == 3
+                               ^~
+                               =
+../code/imageprocess.c(6286): error: expected statement
+        }
+        ^
+9 warnings and 5 errors generated.
 compiling imageprocess.c...
-linking...
-Program Size: Code=92696 RO-data=16432 RW-data=332 ZI-data=74504  
-".\Objects\rt1064.axf" - 0 Error(s), 0 Warning(s).
+".\Objects\rt1064.axf" - 5 Error(s), 9 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -46,6 +101,7 @@ Package Vendor: NXP
   D:/MDK/NXP/MIMXRT1064_DFP/15.1.0
 
 <h2>Collection of Component Files used:</h2>
+Target not created.
 Build Time Elapsed:  00:00:07
 </pre>
 </body>
