@@ -6069,116 +6069,7 @@ void Element_Judgment_Right_Rings()
         }
     }
 }
-//左环岛都识别
-void find_left_ring_3(void)
-{
-    int i,j;
-    int r_st_up,r_st_dw;
-    int st_cha,st_num_uper,st_num_down; // 判断直道
-    int w_num; // 左丢边计数
-    int lower_point; //最底下的拐点
-    int longer_num; // 出环岛检测
-//	  if(Enter_Crosses_Process == 1)
-//		{
-//			flag_left_ring = 0;
-//		}
-    if(Enter_Crosses_Process == 0) // 不能是十字路口，优先级要比十字路口低
-    {
-        if(flag_left_ring == 0)
-        {
-            r_st_dw = ImageDeal[32].RightBorder;
-            r_st_up = ImageDeal[28].RightBorder;
-            int k = (r_st_up - r_st_dw)/(28-32);
-            for(i=45;i>=ImageStatus.OFFLine;i--) // 寻找特征，判断是否是环岛
-            {
-                // 先看右边是否是直道
-                st_cha = ImageDeal[i].RightBorder - (k*(i-45)+r_st_dw);
-                if(st_cha < 4 && st_cha > -4)
-                {
-                    st_num_uper++;
-                }
-                else{
-                    break;
-                }
-            }
-						 for(i=ImageStatus.OFFLine;i<=45;i++) // 从上往下寻找特征，判断是否是环岛
-            {
-                // 先看右边是否是直道
-                st_cha = ImageDeal[i].RightBorder - (k*(i-45)+r_st_dw);
-                if(st_cha < 4 && st_cha > -4)
-                {
-                    st_num_down++;
-                }
-                else{
-                    break;
-                }
-            }
-            for(i=55;i>=ImageStatus.OFFLine;i--) // 左边丢边行数
-            {
-                if(ImageDeal[i].IsLeftFind == 'W')
-                {
-                    w_num++;
-                }
-            }
 
-            if(((st_num_uper >= 20)||(st_num_down>=20))&& w_num >= 15)
-            {
-                flag_left_ring = 1;
-            }
-//						st_num = 0;
-//						w_num = 0;
-        }
-        if(flag_left_ring == 1) // 找到环岛进入下一个阶段
-        {
-            for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
-            {
-//							if(ImageDeal[i].LeftBorder - ImageDeal[i-1].LeftBorder > 6)
-                if(ImageDeal[i].IsLeftFind == 'T' && (ImageDeal[i-1].IsLeftFind == 'W'||ImageDeal[i-1].IsLeftFind == 'H'))
-                {
-                    lower_point = i;
-                    break;
-                }
-            }
-            if(lower_point>30 && lower_point<40)
-            {
-              flag_left_ring = 2;
-							lower_point = 0;
-            }
-        }
-        if(flag_left_ring == 2) // 小车以omu（电阻单位符号）的形状入环
-        {
-            // 电控控制小车左转,然后寻弯道
-            zhuan++;
-            for(i=40;i>=20;i--)
-            {
-                if((ImageDeal[i].IsLeftFind=='W' && ImageDeal[i].IsRightFind=='W')||(ImageDeal[i].RightBorder - ImageDeal[i].LeftBorder > 70))
-							  {
-                    longer_num ++;
-                }
-            }
-            if(longer_num > 10 && zhuan > 300)
-            {
-                flag_left_ring = 3;
-							zhuan = 0;
-            }
-
-						longer_num = 0;
-        }
-        if(flag_left_ring == 3) // 出环岛
-        {
-					zhuan++;
-					if (zhuan > 60)
-					{
-						flag_left_ring = 0;
-					}
-            // 电控控制小车出环，即左转出环
-            // 电控写小车出环条件，用陀螺仪记录航向角左转一定程度，使flag_left_ring == 0
-        }
-//				ips200_show_int(0, 216, st_num_uper, 2);
-//				ips200_show_int(0, 232, w_num, 2);
-//				ips200_show_int(0, 248, lower_point, 2);
-    }
-}
 //左环岛识别
 void find_left_ring_3()
 {
@@ -6195,11 +6086,11 @@ void find_left_ring_3()
         {
             r_st_dw = ImageDeal[54].RightBorder;
             r_st_up = ImageDeal[50].RightBorder;
-            int k = (r_st_up - r_st_dw)/(50-54)
+            int k = (r_st_up - r_st_dw)/(50-54);
             for(i=55;i>=ImageStatus.OFFLine;i--) // 寻找特征，判断是否是环岛
             {
                 // 先看右边是否是直道
-                st_cha = ImageDeal[i].RightBorder - (k*(i-54)+r_st_dw)
+                st_cha = ImageDeal[i].RightBorder - (k*(i-54)+r_st_dw);
                 if(st_cha < 2 && st_cha > -2) // 将直道的判断条件收缩，变得更苛刻
                 {
                     st_num++;
@@ -6210,8 +6101,7 @@ void find_left_ring_3()
             }
             for(i=55;i>=ImageStatus.OFFLine + 1;i--) // *左边丢边行数（划掉）*，现在记录左边赛道正常赛道和丢边的之间跳变数量
             {
-                if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind=='T')||
-                (ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1]=='W'))
+                if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind=='T') || (ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind=='W'))
                 {
                     w_num++;
                 }
@@ -6228,7 +6118,7 @@ void find_left_ring_3()
         {
             for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
             {
-                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == "H"))
+                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'H'))
                 {
                     lower_point = i;
                     break;
@@ -6236,16 +6126,17 @@ void find_left_ring_3()
             }
             if(lower_point>30 && lower_point<55)
             {
-                flag_left_ring == 2;
+                flag_left_ring = 2;
             }else{
-                flag_left_ring == 0;
+                flag_left_ring = 0;
             }
         }
         if(flag_left_ring == 2) // 小车以omu（电阻单位符号）的形状入环
+        // 试一试补线，可能不是很能行
         {
             for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
             {
-                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == "H"))
+                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'H'))
                 {
                     lower_point = i;
                     break;
@@ -6253,7 +6144,7 @@ void find_left_ring_3()
             }
             for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
             {
-                if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind == 'T')||(ImageDeal[i].IsLeftFind == 'H' && ImageDeal[i-1].IsLeftFind == "T"))
+                if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind == 'T')||(ImageDeal[i].IsLeftFind == 'H' && ImageDeal[i-1].IsLeftFind == 'T'))
                 {
                     uper_point = i;
                     break;
@@ -6272,18 +6163,18 @@ void find_left_ring_3()
                 ImageDeal[i].RightBorder = k_1*(i - 55) + ImageDeal[55].RightBorder; 
                 ImageDeal[i].Center = (ImageDeal[i].RightBorder + ImageDeal[i].LeftBorder)/2;
             }
-            //电控帮忙：延时几秒;
-            if(/**/)
-            {
-                flag_left_ring == 3
-            }
+            // 先别急着用，我再看看环岛
+//            if(/**/)
+//            {
+//                flag_left_ring = 3
+//            }
         }
-        if(flag_left_ring == 3) // 环岛内
-        {
-            if(ImageStatus.WhiteLine > 5) //看到出环条件：全白行
-            // 电控控制小车出环，即左转出环
-            // 电控写小车出环条件，用陀螺仪记录航向角左转一定程度，使flag_left_ring == 0
-        }
+//        if(flag_left_ring == 3) // 环岛内
+//        {
+//            if(ImageStatus.WhiteLine > 5) //看到出环条件：全白行
+//            // 电控控制小车出环，即左转出环
+//            // 电控写小车出环条件，用陀螺仪记录航向角左转一定程度，使flag_left_ring == 0
+//        }
     }
 }
 
