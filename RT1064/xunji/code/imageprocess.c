@@ -240,6 +240,9 @@ int flag_right_ring = 0;         //右环岛识别标志位
 int right_ring_process = 0;      //右环岛过程
 int point_num_right = 0;              //拐点数量
 
+int flag_shap_in = 0;
+int flag_shap_out=0; // 出环岛是否找到尖角标志
+
 //因为最多同时补两条线，所以我定义两条补线直线的斜率和拮据
 float k_bu_1_right = 0.0;
 float b_bu_1_right = 0.0;
@@ -6074,12 +6077,13 @@ void Element_Judgment_Right_Rings()
 void find_left_ring_3()
 {
     int i,j;
-    int r_st_up,r_st_dw;
-    int st_cha,st_num; // 判断直道
-    int w_num; // 左丢边计数
+    int r_st_up=0,r_st_dw=0;
+    int st_cha=0,st_num=0; // 判断直道
+    int w_num=0; // 左丢边计数
     int lower_point=55; //最底下的拐点
     int uper_point=0; // 第二个拐点
-    int longer_num; // 出环岛检测
+    int shape_in = 70;
+    int shape_out = 70; // 出环岛检测
     if(Enter_Crosses_Process == 0) // 不能是十字路口，优先级要比十字路口低
     {
         if(flag_left_ring == 0)
@@ -6099,7 +6103,7 @@ void find_left_ring_3()
                     break;
                 }
             }
-            for(i=55;i>=ImageStatus.OFFLine + 1;i--) // *左边丢边行数（划掉）*，现在记录左边赛道正常赛道和丢边的之间跳变数量
+            for(i=55;i>=ImageStatus.OFFLine + 1;i--) // 现在记录左边赛道正常赛道和丢边的之间跳变数量
             {
                 if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind=='T') || (ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind=='W'))
                 {
@@ -6107,7 +6111,7 @@ void find_left_ring_3()
                 }
             }
 
-            if(st_num > 30 && w_num >= 3) // 30行直道行，再加3个跳变点
+            if(st_num > 40 && w_num >= 3) // 40行直道行，再加3个跳变点
             {
                 flag_left_ring = 1;
             }else{
@@ -6115,6 +6119,7 @@ void find_left_ring_3()
             }
         }
         if(flag_left_ring == 1) // 找到环岛进入下一个阶段
+        // 检测到后减速进环
         {
             for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
             {
@@ -6124,25 +6129,23 @@ void find_left_ring_3()
                     break;
                 }
             }
-            if(lower_point>30 && lower_point<55)
+            if(lower_point>20 && lower_point<40)
             {
                 flag_left_ring = 2;
-            }else{
-                flag_left_ring = 0;
             }
         }
         if(flag_left_ring == 2) // 小车以omu（电阻单位符号）的形状入环
         // 试一试补线，可能不是很能行
         {
-            for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
-            {
-                if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'H'))
-                {
-                    lower_point = i;
-                    break;
-                }
-            }
-            for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
+            // for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录最下面的拐点
+            // {
+            //     if((ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'W')||(ImageDeal[i].IsLeftFind == 'T' && ImageDeal[i-1].IsLeftFind == 'H'))
+            //     {
+            //         lower_point = i;
+            //         break;
+            //     }
+            // }
+            for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录第二个的拐点
             {
                 if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind == 'T')||(ImageDeal[i].IsLeftFind == 'H' && ImageDeal[i-1].IsLeftFind == 'T'))
                 {
@@ -6152,10 +6155,10 @@ void find_left_ring_3()
             }
             // 电控控制小车左转,然后寻弯道
             ImageStatus.OFFLine = uper_point; // 改变顶端行
-            int k_2 = (ImageDeal[lower_point].LeftBorder - ImageDeal[55].LeftBorder)/(lower_point - 55);
-            for(i=55;i>=lower_point;i--)
+            // int k_2 = (ImageDeal[lower_point].LeftBorder - ImageDeal[55].LeftBorder)/(lower_point - 55);
+            for(i=55;i>=ImageStatus.OFFLine;i--)
             {
-                ImageDeal[i].LeftBorder = k_2*(i - 55) + ImageDeal[55].LeftBorder; 
+                ImageDeal[i].LeftBorder = ImageDeal[55].LeftBorder;
             }
             int k_1 = (ImageDeal[uper_point].LeftBorder - ImageDeal[55].RightBorder)/(uper_point - 55);
             for(i=55;i>=ImageStatus.OFFLine;i--)
@@ -6163,18 +6166,47 @@ void find_left_ring_3()
                 ImageDeal[i].RightBorder = k_1*(i - 55) + ImageDeal[55].RightBorder; 
                 ImageDeal[i].Center = (ImageDeal[i].RightBorder + ImageDeal[i].LeftBorder)/2;
             }
-            // 先别急着用，我再看看环岛
-//            if(/**/)
-//            {
-//                flag_left_ring = 3
-//            }
+            for ( i = 55; i > 5 ; i--)
+            {
+                if(ImageDeal[i].LeftBorder-ImageDeal[i+1].LeftBorder >= 0 && ImageDeal[i].LeftBorder-ImageDeal[i-1].LeftBorder > 0)
+                {
+                    shape_in = i; //得到尖角所在行
+                    flag_shap_in =1;
+                    break;
+                }
+            }
+            if(flag_shap_in = 1 && shape_in > 60)
+            {
+                flag_left_ring = 3;
+                flag_shap_in = 0;
+            }
+
         }
-//        if(flag_left_ring == 3) // 环岛内
-//        {
-//            if(ImageStatus.WhiteLine > 5) //看到出环条件：全白行
-//            // 电控控制小车出环，即左转出环
-//            // 电控写小车出环条件，用陀螺仪记录航向角左转一定程度，使flag_left_ring == 0
-//        }
+       if(flag_left_ring == 3) // 环岛内
+        { 
+            for ( i = 55; i > 5 ; i--)
+            {
+                if(ImageDeal[i].LeftBorder-ImageDeal[i+1].LeftBorder > 0 && ImageDeal[i].LeftBorder-ImageDeal[i-1].LeftBorder > 0)
+                {
+                    shape_out = i; //得到尖角所在行
+                    flag_shap_out =1;
+                    break;
+                }
+            }
+            if(shape_out<60 && ImageDeal[shape_out].LeftBorder<60)
+            {
+                for(i=55;i>=ImageStatus.OFFLine;i--)
+                {
+                    ImageDeal[i].LeftBorder=ImageDeal[55].LeftBorder;
+                    ImageDeal[i].Center=(ImageDeal[i].LeftBorder + ImageDeal[i].RightBorder)/2; //更新中线和边线
+                }
+            }
+            if(flag_shap_out = 1 && shape_out > 60)
+            {
+                flag_left_ring = 0;
+                flag_shap_out = 0;
+            }
+        }
     }
 }
 
