@@ -5673,7 +5673,10 @@ void Element_Judgment_Right_Rings()
 //左环岛识别
 void find_left_ring_3()
 {
-    int i,j;
+    int i;
+	  int biao11 = 0,biao12 = 0,biao13 = 0,biao14 = 0;
+	  int biao21 = 0,biao22 = 0,biao23 = 0,biao24 = 0;
+	  int num = 0,num1 = 0,num2 =0;
     int r_st_up=0,r_st_dw=0;
     int st_cha=0,st_num=0; // 判断直道
     int w_num=0; // 左丢边计数
@@ -5684,6 +5687,7 @@ void find_left_ring_3()
     int L_num_down=0,R_num_down=0;
     int L_num_up=0,R_num_up=0;
     int point_1=59;
+
     if(Enter_Crosses_Process == 0) // 不能是十字路口，优先级要比十字路口低
     {
         return; // 没有环岛
@@ -5692,6 +5696,59 @@ void find_left_ring_3()
 // 先判断是否是环岛
     if(flag_left_ring == 0)
     {
+    for(i=53;i>=ImageStatus.OFFLine;i--)                       //后五行因为之前扫线程序的原因，标识符均为‘T’，会影响我之后的判断，故跳过他们开始循环
+    {
+        if(biao11 == 0 && ImageDeal[i].IsRightFind == 'T' && ImageDeal[i-1].IsRightFind == 'W')
+        {
+            biao11 = 1;                         //右环岛从下往上的第一个拐点被找到并记录位置
+            num1++;
+        }
+        if(biao11 == 1 && biao12 == 0 && ImageDeal[i].IsRightFind == 'W' && ImageDeal[i-1].IsRightFind == 'T')                    //只有第一个找到才接着去找剩下两个点
+        {
+            biao12 = 1;                         //右环岛从下往上的第2个拐点被找到并记录位置
+            num1++;
+        }
+        if(biao11 == 1 && biao12 == 1 && biao13 == 0 && ImageDeal[i].IsRightFind == 'T' && ImageDeal[i-1].IsRightFind == 'W')                    //只有前面的拐点找到了才去找剩下的
+        {
+            biao13 = 1;                         //右环岛从下往上的第3个拐点被找到并记录位置
+            num1++;
+        }
+        if(biao11 == 1 && biao12 == 1 && biao13 == 1 && biao14 == 0 && ImageDeal[i].IsRightFind == 'W' && ImageDeal[i-1].IsRightFind == 'T')                    //只有前面的拐点找到了才去找剩下的
+        {
+            biao14 = 1;                         //右环岛从下往上的第4个拐点被找到并记录位置
+            num1++;
+        }
+    }
+		for(i=ImageStatus.OFFLine;i<=53;i++) 
+		{
+			if (biao24 == 0 && ImageDeal[i].IsRightFind == 'W' && ImageDeal[i-1].IsRightFind == 'T')
+			{
+				biao24 = 1;
+				num2++;
+			}
+			if (biao24 == 1 && biao23 == 0 && ImageDeal[i].IsRightFind == 'T' && ImageDeal[i-1].IsRightFind == 'W')
+			{
+				biao23 = 1;
+				num2++;
+			}
+			if (biao24 == 1 && biao23 == 1 && biao22 == 0 && ImageDeal[i].IsRightFind == 'W' && ImageDeal[i-1].IsRightFind == 'T')
+			{
+				biao22 = 1;
+				num2++;
+			}
+			if (biao24 == 1 && biao23 == 1 && biao22 == 1 && biao21 == 0 && ImageDeal[i].IsRightFind == 'T' && ImageDeal[i-1].IsRightFind == 'W')
+			{
+				biao21 = 1;
+                num2++;				
+			}
+		}
+        if(num1>num2)
+        {
+            num = num1;
+        }else{
+            num = num2;
+        } // 以上通过寻找拐点来判断环岛，num数量大于等于4
+
         st_num = 0;
         r_st_dw = ImageDeal[54].RightBorder;
         r_st_up = ImageDeal[50].RightBorder;
@@ -5727,7 +5784,7 @@ void find_left_ring_3()
             }
         }
 
-        if((st_num > 40 && w_num >= 3)||(flag_left_ring_02 != 0))
+        if((st_num > 40 && w_num >= 3)||(flag_left_ring_02 != 0)||(num >= 4))
         {
             flag_left_ring =1;
         }else
@@ -5804,7 +5861,7 @@ void find_left_ring_3()
         {
             ImageDeal[i].LeftBorder = 4;
         }
-        int k_1 = (ImageDeal[29].LeftBorder - ImageDeal[55].RightBorder)/(29 - 55);
+        int k_1 = (4 - ImageDeal[55].RightBorder)/(29 - 55); // 强制设定29行左边线为4
         for(i=59;i>=ImageStatus.OFFLine;i--)
         {
             ImageDeal[i].RightBorder = k_1*(i - 55) + ImageDeal[55].RightBorder; 
@@ -5819,7 +5876,7 @@ void find_left_ring_3()
         {
             ImageDeal[i].LeftBorder = 4;
         }
-        int k_2 = (ImageDeal[29].LeftBorder - ImageDeal[55].RightBorder)/(29 - 55);
+        int k_2 = (ImageDeal[29].LeftBorder - ImageDeal[55].RightBorder)/(29 - 55); // 这里运行不错，暂且不作修改
         for(i=59;i>=ImageStatus.OFFLine;i--)
         {
             ImageDeal[i].RightBorder = k_2*(i - 55) + ImageDeal[55].RightBorder; 
