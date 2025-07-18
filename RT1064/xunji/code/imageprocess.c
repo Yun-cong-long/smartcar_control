@@ -5784,7 +5784,7 @@ void find_left_ring_3()
             }
         }
 
-        if((st_num > 40 && w_num >= 3)||(flag_left_ring_02 != 0)||(num >= 4))
+        if((st_num > 30 && w_num >= 3)||(flag_left_ring_02 != 0)||(num >= 3))
         {
             flag_left_ring =1;
         }else
