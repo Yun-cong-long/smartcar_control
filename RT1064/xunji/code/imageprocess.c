@@ -242,6 +242,10 @@ int point_num_right = 0;              //拐点数量
 
 int flag_shap_in = 0;
 int flag_shap_out=0; // 出环岛是否找到尖角标志
+int flag_left_ring_01=0;
+int flag_left_ring_02=0;// 判断环岛使用两种方式，有一种成立即可认为是环岛，这些01,02的标志位是用与辅助的
+int flag_left_ring_02_1=0;
+int flag_left_ring_02_2=0;
 
 //因为最多同时补两条线，所以我定义两条补线直线的斜率和拮据
 float k_bu_1_right = 0.0;
@@ -6084,6 +6088,8 @@ void find_left_ring_3()
     int uper_point=0; // 第二个拐点
     int shape_in = 70;
     int shape_out = 70; // 出环岛检测
+
+    int point_1=59;
     if(Enter_Crosses_Process == 0) // 不能是十字路口，优先级要比十字路口低
     {
         if(flag_left_ring == 0)
@@ -6117,6 +6123,26 @@ void find_left_ring_3()
             }else{
                 flag_left_ring = 0; //保证不影响其他地方循迹
             }
+
+            for(i=58;i>=ImageStatus.OFFLine-6;i--)
+            {
+                if(ImageDeal[i+3].LeftBorder>ImageDeal[i+4].LeftBorder
+                && ImageDeal[i+3].LeftBorder>ImageDeal[i+2].LeftBorder
+                && ImageDeal[i+3].LeftBorder>ImageDeal[i+5].LeftBorder
+                && ImageDeal[i+3].LeftBorder>ImageDeal[i+1].LeftBorder)
+                {
+                    flag_left_ring_02_1 = 1;
+                }
+            }
+            for(i=58;i>=ImageStatus.OFFLine;i--)
+            {
+                if(ImageDeal[i].LeftBorder - ImageDeal[i-1].LeftBorder > 4)
+                {
+                    point_1 = i;
+                }
+            }
+
+
         }
         if(flag_left_ring == 1) // 找到环岛进入下一个阶段
         // 检测到后减速进环
@@ -6145,6 +6171,15 @@ void find_left_ring_3()
             //         break;
             //     }
             // }
+            for ( i = 59; i > 5 ; i--)
+            {
+                if(ImageDeal[i].LeftBorder-ImageDeal[i+1].LeftBorder >= 0 && ImageDeal[i].LeftBorder-ImageDeal[i-1].LeftBorder > 0)
+                {
+                    shape_in = i; //得到尖角所在行
+                    flag_shap_in =1;
+                    break;
+                }
+            }
             for(i=55;i>=ImageStatus.OFFLine+1;i--) // 记录第二个的拐点
             {
                 if((ImageDeal[i].IsLeftFind == 'W' && ImageDeal[i-1].IsLeftFind == 'T')||(ImageDeal[i].IsLeftFind == 'H' && ImageDeal[i-1].IsLeftFind == 'T'))
@@ -6156,25 +6191,17 @@ void find_left_ring_3()
             // 电控控制小车左转,然后寻弯道
             ImageStatus.OFFLine = uper_point; // 改变顶端行
             // int k_2 = (ImageDeal[lower_point].LeftBorder - ImageDeal[55].LeftBorder)/(lower_point - 55);
-            for(i=55;i>=ImageStatus.OFFLine;i--)
+            for(i=59;i>=ImageStatus.OFFLine;i--)
             {
-                ImageDeal[i].LeftBorder = ImageDeal[55].LeftBorder;
+                ImageDeal[i].LeftBorder = 4;
             }
             int k_1 = (ImageDeal[uper_point].LeftBorder - ImageDeal[55].RightBorder)/(uper_point - 55);
-            for(i=55;i>=ImageStatus.OFFLine;i--)
+            for(i=59;i>=ImageStatus.OFFLine;i--)
             {
                 ImageDeal[i].RightBorder = k_1*(i - 55) + ImageDeal[55].RightBorder; 
                 ImageDeal[i].Center = (ImageDeal[i].RightBorder + ImageDeal[i].LeftBorder)/2;
             }
-            for ( i = 55; i > 5 ; i--)
-            {
-                if(ImageDeal[i].LeftBorder-ImageDeal[i+1].LeftBorder >= 0 && ImageDeal[i].LeftBorder-ImageDeal[i-1].LeftBorder > 0)
-                {
-                    shape_in = i; //得到尖角所在行
-                    flag_shap_in =1;
-                    break;
-                }
-            }
+            
             if(flag_shap_in = 1 && shape_in > 60)
             {
                 flag_left_ring = 3;
