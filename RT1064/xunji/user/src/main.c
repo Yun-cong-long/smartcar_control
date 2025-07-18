@@ -106,6 +106,7 @@ uint32 fifo_data_count = 0;                                                     
 fifo_struct uart_data_fifo;
 uint8 gpio_status;
 
+extern int flag_Xsi;
 int findbox = 0;
 float bili = 0.0;
 int bias_center = 0;
@@ -120,10 +121,12 @@ int time_flag = 0;
 uint8 faajishu = 0;
 int kongxian = 0;
 int jishu = 0;
+int starttt = 0;
 void zhouqipit_init(void);
 void jieguoxianshi(int n,int count);
 void text(void);
-
+int jiaojishu = 0;
+int huandao = 0;
 int main(void)
 {
     clock_init(SYSTEM_CLOCK_600M);  // 不可删除
@@ -180,6 +183,7 @@ int main(void)
 					  if(mt9v03x_finish_flag)
             {
 			          angle_turn = Image_Process();
+//							  mt9v03x_finish_flag = 0;
 				    }
 //							  text();
 //							ips200_show_int(0, 248, state, 4);
@@ -220,8 +224,121 @@ int main(void)
 //								ips200_show_int(0, 264, jieshu, 10);
 								if (jieshu > 160)
 								{
-									state = 0;
+									state = 100;
 									Motor_Clear();
+								}
+							}
+//							if (state == 20)      //环岛直行
+//							{
+//								if (time_flag == 0)
+//						     {
+//							     timer_start(GPT_TIM_1);           // 启动定时 
+//							     time_flag = 1;
+//						     }
+//								go_time = timer_get(GPT_TIM_1); //获取定时的时间
+//									 move_control(100,0);
+//								if (go_time >= 1800000)  //跑一段时间
+//								{
+//									timer_stop(GPT_TIM_1);                      // 停止定时器
+//							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+//							    go_time = 0;
+//							    time_flag = 0;
+//								  position_zero();
+//									state = 21;
+//									continue;
+//								}
+//							}
+							if (state == 21)      //入环
+							{
+								set_motor_speed(30,30,30);
+								if (Angle_z - jiaodunow >= 35)
+								{
+									Motor_Clear();
+									state = 22;
+									continue;
+								}
+							}
+							if (state == 22)      //环岛直行
+							{
+								if (time_flag == 0)
+						     {
+							     timer_start(GPT_TIM_1);           // 启动定时 
+							     time_flag = 1;
+						     }
+								go_time = timer_get(GPT_TIM_1); //获取定时的时间
+									 move_control(120,0);
+								if (go_time >= 1000000)  //跑一段时间
+								{
+									timer_stop(GPT_TIM_1);                      // 停止定时器
+							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+							    go_time = 0;
+							    time_flag = 0;
+								  position_zero();
+									state = 1;
+									continue;
+								}
+							}
+//							if (state == 22)            //环内循迹
+//							{
+//								if (time_flag == 0)
+//						     {
+//							     timer_start(GPT_TIM_1);           // 启动定时 
+//							     time_flag = 1;
+//						     }
+//								go_time = timer_get(GPT_TIM_1); //获取定时的时间
+//									move_control(120,angle_turn*0.6);
+//								if (go_time >= 3000000)  //跑一段时间
+//								{
+//									timer_stop(GPT_TIM_1);                      // 停止定时器
+//							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+//							    go_time = 0;
+//							    time_flag = 0;
+//									Motor_Clear();
+//								  position_zero();
+//									state = 23;
+//									continue;
+//								}
+//							}
+//							if (state == 23)          //出环
+//							{
+//								if (time_flag == 0)
+//						     {
+//							     timer_start(GPT_TIM_1);           // 启动定时 
+//							     time_flag = 1;
+//						     }
+//								go_time = timer_get(GPT_TIM_1); //获取定时的时间
+//									 move_control(120,-6);
+//								if (go_time >= 1200000)  //跑一段时间
+//								{
+//									timer_stop(GPT_TIM_1);                      // 停止定时器
+//							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+//							    go_time = 0;
+//							    time_flag = 0;
+//									Motor_Clear();
+//								  position_zero();
+//									state = 1;
+//									continue;
+//								}
+//							}
+							if (state == 0)    //前进过斑马线
+							{
+								if (time_flag == 0)
+						     {
+							     timer_start(GPT_TIM_1);           // 启动定时 
+							     time_flag = 1;
+						     }
+								go_time = timer_get(GPT_TIM_1); //获取定时的时间
+								move_control(100,0);
+								if (go_time >= 1000000)  //跑一段时间
+								{
+									timer_stop(GPT_TIM_1);                      // 停止定时器
+							    timer_clear(GPT_TIM_1);   		// 计时值使用完毕后记得清除，避免导致下次计时不从0开始
+							    go_time = 0;
+							    time_flag = 0;
+									Motor_Clear();
+								  position_zero(); 
+									state = 1;
+									continue;
 								}
 							}
 				    	if (state == 1)     //正常循迹
@@ -233,10 +350,11 @@ int main(void)
 										jieshu = 0;
 									}
 									findbox = get_uart1_data;
-								  ips200_show_int(0, 200, findbox, 2);
+//								  ips200_show_int(0, 200, findbox, 2);
 									jiaodunow = Angle_z;
 									if (findbox == 1 || kongxian <100)  //没识别到红方块
 									{
+//										move_control(120,angle_turn*0.6);
 										move_control(150,angle_turn);
 									}
 									else
@@ -246,14 +364,23 @@ int main(void)
 //										Motor_Clear();
 										kongxian = 0;
 										state = 2;
+										
+										continue;
 									}
-				  		    
+				  		    if (Enter_Rings_Process == 1 && huandao == 0)
+									{
+										state = 21;
+										Motor_Clear();
+										kongxian = 0;
+										huandao++;
+										continue;
+									}
 			        }
 							if (state == 2)    //对齐红方块
 							{
 								findbox=get_uart1_data;
-								ips200_show_int(0, 200, findbox, 2);
-								if (Angle_z - jiaodunow < 10 && Angle_z - jiaodunow > -10)
+//								ips200_show_int(0, 200, findbox, 2);
+								if (Angle_z - jiaodunow < 25 && Angle_z - jiaodunow > -25)
 								{
 									if (findbox == 2)      //车在左边
 	              {
@@ -278,6 +405,9 @@ int main(void)
 //									system_delay_ms(100);
 //									Motor_Clear();
 									state = 3;
+									jiaodunow = Angle_z;
+								 jiaodujj = angle_turn;
+									continue;
 	              }
 							  }
 								else
@@ -294,6 +424,17 @@ int main(void)
 								 if (faajishu == 1)
 				  	     {
 									 fifo_data_count = fifo_used(&uart_data_fifo);                           // 查看 fifo 是否有数据
+									 if(fifo_data_count == 2)                                                // 读取到数据了
+                   {
+                     fifo_read_buffer(&uart_data_fifo, fifo_get_data, &fifo_data_count, FIFO_READ_AND_CLEAN);    // 将 fifo 中数据读出并清空 fifo 挂载的缓冲
+//                     ips200_show_int(0, 200, fifo_data_count, 3);
+							       int numsss = 0;
+							       numsss = fifo_get_data[1] % 2;
+				  		       if (numsss == 1)
+									     state = 4;           //左推箱子
+								     if (numsss == 0)
+									     state = 8;        //右推箱子
+                   }
 						       if(fifo_data_count == 3)                                                // 读取到数据了
                    {
                      fifo_read_buffer(&uart_data_fifo, fifo_get_data, &fifo_data_count, FIFO_READ_AND_CLEAN);    // 将 fifo 中数据读出并清空 fifo 挂载的缓冲
@@ -318,6 +459,17 @@ int main(void)
 								 else
 								 {
 									 fifo_data_count = fifo_used(&uart_data_fifo);                           // 查看 fifo 是否有数据
+									 if(fifo_data_count == 1)                                                // 读取到数据了
+                   {
+                     fifo_read_buffer(&uart_data_fifo, fifo_get_data, &fifo_data_count, FIFO_READ_AND_CLEAN);    // 将 fifo 中数据读出并清空 fifo 挂载的缓冲
+//                     ips200_show_int(0, 200, fifo_data_count, 3);
+							       int numsss = 0;
+							       numsss = fifo_get_data[0] % 2;
+				  		       if (numsss == 1)
+									     state = 4;           //左推箱子
+								     if (numsss == 0)
+									     state = 8;        //右推箱子
+                   }
 						       if(fifo_data_count == 2)                                                // 读取到数据了
                    {
                      fifo_read_buffer(&uart_data_fifo, fifo_get_data, &fifo_data_count, FIFO_READ_AND_CLEAN);    // 将 fifo 中数据读出并清空 fifo 挂载的缓冲
@@ -345,6 +497,7 @@ int main(void)
 								 jiaodunow = Angle_z;
 								 jiaodujj = angle_turn;
 								 Motor_Clear();
+								 continue;
 					     }
 							if (state == 4)        //左推箱子
 							{
@@ -353,6 +506,7 @@ int main(void)
 		                 {
 			                 Motor_Clear();
 											 state = 5;
+											 continue;
 		                 }
 		                 else
 		                 {
@@ -378,6 +532,7 @@ int main(void)
 							    time_flag = 0;
 								  position_zero();
 									state = 6;
+									continue;
 								}
 							}
 							if (state == 6)          //回到赛道
@@ -401,6 +556,7 @@ int main(void)
 							    time_flag = 0;
 								  position_zero();
 									state = 7;
+									continue;
 								}
 							}
 							if (state == 7)       //复原角度
@@ -413,6 +569,7 @@ int main(void)
 //									{
 			               Motor_Clear();
 									   state = 1;
+									continue;
 //									}
 		            }
 							}
@@ -423,6 +580,7 @@ int main(void)
 		            {
 			            Motor_Clear();
 								  state = 9;
+									continue;
 		            }
 		            else
 		            {
@@ -448,6 +606,7 @@ int main(void)
 							    time_flag = 0;
 								  position_zero();
 									state = 10;
+									continue;
 								}
 							}
 							if (state == 10)         //回来
@@ -471,6 +630,7 @@ int main(void)
 							    time_flag = 0;
 								  position_zero();
 									state = 11;
+									continue;
 								}
 							}
 							if (state == 11)
@@ -483,6 +643,7 @@ int main(void)
 //									{
 			               Motor_Clear();
 									   state = 1;
+									continue;
 //									}
 		            }
 							}
@@ -636,6 +797,11 @@ void jieguoxianshi(int n, int count)
 			ips200_show_int(120, n*16, fifo_get_data[0]-48, 1);
 			ips200_show_int(136, n*16, fifo_get_data[1]-48, 1);
 		}
+		if (count == 1)
+		{
+			ips200_show_int(0, n*16, n, 3);
+			ips200_show_int(120, n*16, fifo_get_data[0]-48, 1);
+		}
 //	}
 }
 
@@ -645,11 +811,11 @@ void text(void)
 //	SetMotorCurrent(2,-1700);   //800临界
 //	SetMotorCurrent(3,2550);  //目前向右走
 //  SetMotorCurrent(4,-1700);
-//	  set_motor_speed(-30,60,-30);
+//	  set_motor_speed(-30,-30,-30);
 //	speed_and_angle(10,90);
 //	text111(10,0,-10);
 //	text111(0,30,0);
-	  speed_and_angle(10,90);
+//	  speed_and_angle(10,90);
 //	set_motor_speed(0,70,-15);
 	
 	//编码器测试
@@ -692,13 +858,13 @@ void text(void)
 //		ips200_show_int(0, 216+16*i, fifo_get_data[i], 10);
 //  }
 	
-//	//结果测试
-//	uart_write_byte (UART_4, 'A');
-//	faajishu++;
-//	system_delay_ms(2000);
-//	fifo_data_count = fifo_used(&uart_data_fifo);                           // 查看 fifo 是否有数据
-//	fifo_read_buffer(&uart_data_fifo, fifo_get_data, &fifo_data_count, FIFO_READ_AND_CLEAN);    // 将 fifo 中数据读出并清空 fifo 挂载的缓冲
-//	jieguoxianshi(faajishu, fifo_data_count);
+	//结果测试
+	uart_write_byte (UART_4, 'A');
+	faajishu++;
+	system_delay_ms(2000);
+	fifo_data_count = fifo_used(&uart_data_fifo);                           // 查看 fifo 是否有数据
+	fifo_read_buffer(&uart_data_fifo, fifo_get_data, &fifo_data_count, FIFO_READ_AND_CLEAN);    // 将 fifo 中数据读出并清空 fifo 挂载的缓冲
+	jieguoxianshi(faajishu, fifo_data_count);
 
 
 //    //显示屏测试
@@ -766,6 +932,12 @@ void text(void)
 //				 text111(0,0,0);
 
 //      //蜂鸣器测试
-//      gpio_set_level(B11, 1);   //启动蜂鸣器
-//			gpio_set_level(B11, 0);   //关闭蜂鸣器
+//			if (jiaojishu <40)
+//        gpio_set_level(B11, 1);   //启动蜂鸣器
+//			if (jiaojishu >40)
+//			  gpio_set_level(B11, 0);   //关闭蜂鸣器
+//			jiaojishu++;
+//			if (jiaojishu >80)
+//				jiaojishu = 0;
+
 }
